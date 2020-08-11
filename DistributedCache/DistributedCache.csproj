@@ -7,6 +7,10 @@
 		<AssemblyName>IntelligentHack.DistributedCache</AssemblyName>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<Version>1.0.0</Version>
+		<PackageId>IntelligentHack.DistributedCache</PackageId>
+		<Authors>IntelligentHack</Authors>
+		<PackageProjectUrl>https://github.com/intelligenthack/distributed-cache</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/intelligenthack/distributed-cache.git</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
