@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -15,13 +14,13 @@ namespace IntelligentHack.DistributedCache
         /// <param name="redisConnectionString">The redis connection string.</param>
         /// <param name="exceptionLogger">A callback to log exceptions found in background tasks.</param>
         /// <param name="redisKeyPrefix">A prefix that is appended to the keys on redis, to avoid naming collisions.</param>
-        public static IServiceCollection AddRedisDistributedCache(this IServiceCollection services, string redisConnectionString, Action<Exception> exceptionLogger, string redisKeyPrefix = "cache:")
+        public static IServiceCollection AddRedisDistributedCache(this IServiceCollection services, string redisConnectionString, Action<Exception> exceptionLogger, IRedisValueSerializer? valueSerializer = null, string redisKeyPrefix = "cache:")
         {
             return services
-                .AddSingleton(sp => new RedisCache(redisConnectionString, redisKeyPrefix, exceptionLogger))
+                .AddSingleton(sp => new RedisCache(redisConnectionString, redisKeyPrefix, valueSerializer ?? DefaultRedisValueSerializer.Instance, exceptionLogger))
                 .AddHostedService(sp => sp.GetRequiredService<RedisCache>())
                 .AddSingleton<ICache>(sp => new CompositeCache(
-                    primary: new InMemoryCache(sp.GetRequiredService<IMemoryCache>()),
+                    primary: new MemoryCache(WallClock.Instance),
                     secondary: sp.GetRequiredService<RedisCache>()
                 ));
         }

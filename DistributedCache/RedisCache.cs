@@ -14,13 +14,15 @@ namespace IntelligentHack.DistributedCache
         private IConnectionMultiplexer? _redis;
         private readonly string _redisConnectionString;
         private readonly string _keyPrefix;
+        private readonly IRedisValueSerializer _valueSerializer;
         private readonly Action<Exception> _exceptionLogger;
         private readonly Guid _clientId = Guid.NewGuid();
 
-        public RedisCache(string redisConnectionString, string keyPrefix, Action<Exception> exceptionLogger)
+        public RedisCache(string redisConnectionString, string keyPrefix, IRedisValueSerializer valueSerializer, Action<Exception> exceptionLogger)
         {
             _redisConnectionString = redisConnectionString;
             _keyPrefix = keyPrefix;
+            _valueSerializer = valueSerializer;
             _exceptionLogger = exceptionLogger;
         }
 
@@ -28,7 +30,7 @@ namespace IntelligentHack.DistributedCache
         private IDatabase Database => Redis.GetDatabase();
         private ISubscriber Subscriber => Redis.GetSubscriber();
 
-        public async ValueTask<T> GetSet<T>(string key, Func<ValueTask<T>> setAction, TimeSpan duration)
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<ValueTask<T>> calculateValue, TimeSpan duration)
         {
             if (Redis.IsConnected)
             {
@@ -38,12 +40,12 @@ namespace IntelligentHack.DistributedCache
                     var hit = await Database.StringGetAsync(prefixedKey);
                     if (hit.HasValue)
                     {
-                        return TypeConverter.ChangeType<T>((string)hit);
+                        return _valueSerializer.Deserialize<T>(hit);
                     }
                     else
                     {
-                        var freshValue = await setAction();
-                        var serializedValue = TypeConverter.ChangeType<string>(freshValue);
+                        var freshValue = await calculateValue();
+                        var serializedValue = _valueSerializer.Serialize(freshValue);
                         var expiry = duration != TimeSpan.MaxValue ? duration : default(TimeSpan?);
                         await Database.StringSetAsync(prefixedKey, serializedValue, expiry);
                         await BroadcastInvalidatedKey(key);
@@ -58,7 +60,7 @@ namespace IntelligentHack.DistributedCache
             }
 
             // Fallback
-            return await setAction();
+            return await calculateValue();
         }
 
         public async ValueTask Invalidate(string key)

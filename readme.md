@@ -9,9 +9,10 @@ When looking up a key, the memory cache is checked first. If the value is not fo
 Register the required services:
 
 ```c#
-services
-    .AddMemoryCache()
-    .AddRedisDistributedCache(Configuration.GetConnectionString("Redis"), ex => ex.LogNoContext());
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddRedisDistributedCache(Configuration.GetConnectionString("Redis"), ex => ex.LogNoContext());
+}
 ```
 
 ## Usage
@@ -21,8 +22,9 @@ services
 ```c#
 ICache cache = ...; // Get the cache from the DI container
 string contentId = ...;
+string cacheKey = "<some unique constructed key value, usually derived from contentId>";
 
-var cachedValue = await cache.GetSet(contentId, async () =>
+var cachedValue = await cache.GetSetAsync(cacheKey, async () =>
 {
     // Read the value from the DB.
     // This callback will only be executed if the value was not found in the cache.
@@ -40,6 +42,7 @@ var cachedValue = await cache.GetSet(contentId, async () =>
 ICache cache = ...; // Get the cache from the DI container
 string contentId = ...;
 string newValue = ...;
+string cacheKey = "<some unique constructed key value, usually derived from contentId>";
 
 // Update the database
 using var sqlConnection = OpenConnection();
@@ -49,5 +52,5 @@ await sqlConnection.ExecuteAsync(
 );
 
 // Invalidate the cache
-await cache.Invalidate(contentId);
+await cache.Invalidate(cacheKey);
 ```
