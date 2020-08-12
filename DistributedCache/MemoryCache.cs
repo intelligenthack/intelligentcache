@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace IntelligentHack.DistributedCache
@@ -23,7 +24,7 @@ namespace IntelligentHack.DistributedCache
             private TaskCompletionSource<object?>? _valuePromise;
             private DateTime _expiration;
 
-            public async ValueTask<T> GetSet<T>(DateTime now, Func<ValueTask<T>> calculateValue, TimeSpan duration)
+            public async ValueTask<T> GetSet<T>(DateTime now, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
             {
                 var currentValuePromise = this._valuePromise;
                 if (currentValuePromise is null || _expiration <= now)
@@ -51,18 +52,18 @@ namespace IntelligentHack.DistributedCache
                     {
                         try
                         {
-                            var value = await calculateValue();
+                            var value = await calculateValue(cancellationToken);
                             currentValuePromise.SetResult(value);
                             return value;
                         }
                         catch (Exception ex)
                         {
                             // Propagate the exception to the other threads that are waiting for this result.
-                            currentValuePromise.SetException(ex);
                             lock (this)
                             {
                                 _valuePromise = null;
                             }
+                            currentValuePromise.SetException(ex);
                             throw;
                         }
                     }
@@ -70,7 +71,21 @@ namespace IntelligentHack.DistributedCache
 
                 // Someone else is calculating the value (or has already done so), just wait for it.
                 // If we reach this point, currentValuePromise is not null.
-                return (T)(await currentValuePromise.Task)!;
+                if (cancellationToken.CanBeCanceled)
+                {
+                    // Honour the provided cancellation token
+                    var cancellation = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    cancellationToken.Register(() => cancellation.SetCanceled());
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    await Task.WhenAny(currentValuePromise.Task, cancellation.Task);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return (T)currentValuePromise.Task.Result!;
+                }
+                else
+                {
+                    return (T)(await currentValuePromise.Task)!;
+                }
             }
 
             public bool Invalidate()
@@ -91,10 +106,10 @@ namespace IntelligentHack.DistributedCache
 
         public event Action<string>? KeyInvalidated;
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<ValueTask<T>> calculateValue, TimeSpan duration)
+        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             var entry = _entries.GetOrAdd(key, _ => new CacheEntry());
-            return entry.GetSet(_clock.UtcNow, calculateValue, duration);
+            return entry.GetSet(_clock.UtcNow, calculateValue, duration, cancellationToken);
         }
 
         public ValueTask Invalidate(string key)

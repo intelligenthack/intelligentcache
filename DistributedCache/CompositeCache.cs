@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace IntelligentHack.DistributedCache
@@ -22,11 +23,12 @@ namespace IntelligentHack.DistributedCache
             _secondary.KeyInvalidated += key => _primary.Invalidate(key);
         }
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<ValueTask<T>> calculateValue, TimeSpan duration)
+        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             return _primary.GetSetAsync(key,
-                () => _secondary.GetSetAsync(key, calculateValue, duration),
-                duration
+                ct => _secondary.GetSetAsync(key, calculateValue, duration, ct),
+                duration,
+                cancellationToken
             );
         }
 

@@ -2,6 +2,7 @@ using AutoFixture;
 using IntelligentHack.DistributedCache;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -106,13 +107,13 @@ namespace DistributedCache.Tests
 
             public List<(int order, string name, string key)> Operations { get; } = new List<(int, string, string)>();
 
-            public async ValueTask<T> GetSetAsync<T>(string key, Func<ValueTask<T>> calculateValue, TimeSpan duration)
+            public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
             {
                 Operations.Add((OperationCounter++, nameof(GetSetAsync), key));
 
                 if (!TryGetValue(key, out var value))
                 {
-                    value = await calculateValue();
+                    value = await calculateValue(cancellationToken);
                 }
                 return (T)value!;
             }

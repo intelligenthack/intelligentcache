@@ -113,7 +113,7 @@ namespace DistributedCache.Tests
             Assert.False(firstAccess.IsCompleted);
             Assert.False(secondAccess.IsCompleted);
 
-            calculation.Complete();
+            await calculation.Complete();
 
             var results = await Task.WhenAll(firstAccess.AsTask(), secondAccess.AsTask());
 
@@ -146,7 +146,7 @@ namespace DistributedCache.Tests
 
             var recalculatedValue = await sut.GetSet(key, () => counter++);
 
-            calculation.Complete();
+            await calculation.Complete();
 
             var invalidatedResults = await Task.WhenAll(firstAccess.AsTask(), secondAccess.AsTask());
 
@@ -171,18 +171,21 @@ namespace DistributedCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSetAsync<int>(key, calculation);
+            var firstAccess = sut.GetSetAsync<int>(key, calculation).AsTask();
             await calculation.WaitForEvaluation();
 
             var secondAccess = sut.GetSet(key, () => counter++);
 
-            calculation.Fail();
+            await calculation.Fail();
+
+            // We need to wait for the first access to complete.
+            // Before that we can't be sure that the cache had a chance to remove the result from the cache.
+            await firstAccess.ContinueWith(_ => { });
 
             var recalculatedValue = await sut.GetSet(key, () => counter++);
 
             // Assert
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() => firstAccess.AsTask());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => firstAccess);
 
             // The second access should also throw because when the request started it was
             // not known that the result would be an exception.
@@ -203,10 +206,8 @@ namespace DistributedCache.Tests
             var key = _fixture.Create<string>();
             var counter = 0;
 
-            var calculation = new LongRunningCalculation(_fixture.Create<int>());
-
             // Act
-            var timeout = sut.GetSetAsync(key, async () =>
+            var timeout = sut.GetSetAsync(key, async ct =>
             {
                 await Task.Delay(1000, new CancellationTokenSource(10).Token);
                 return counter++;
@@ -221,10 +222,83 @@ namespace DistributedCache.Tests
             Assert.Equal(1, counter);
         }
 
+        [Fact]
+        public async Task Cancellation_is_honoured_when_calculating_the_value()
+        {
+            // Arrange
+            var clock = new TestClock();
+            var sut = new MemoryCache(clock);
+
+            var key = _fixture.Create<string>();
+
+            var calculation = new LongRunningCalculation(_fixture.Create<int>());
+
+            // Act
+            var cancellation = new CancellationTokenSource();
+            var cancelled = sut.GetSetAsync<int>(key, calculation, cancellationToken: cancellation.Token);
+            await calculation.WaitForEvaluation();
+
+            cancellation.Cancel();
+            
+            // Assert
+            await Assert.ThrowsAsync<TaskCanceledException>(() => cancelled.AsTask());
+        }
+
+        [Fact]
+        public async Task Cancellation_of_the_calculation_is_honoured_when_waiting_for_another_threads_calculation()
+        {
+            // Arrange
+            var clock = new TestClock();
+            var sut = new MemoryCache(clock);
+
+            var key = _fixture.Create<string>();
+
+            var calculation = new LongRunningCalculation(_fixture.Create<int>());
+
+            // Act
+            var cancellation = new CancellationTokenSource();
+            var firstAccess = sut.GetSetAsync<int>(key, calculation, cancellationToken: cancellation.Token);
+            await calculation.WaitForEvaluation();
+
+            var secondAccess = sut.GetSet(key, () => _fixture.Create<int>());
+
+            cancellation.Cancel();
+
+            // Assert
+            await Assert.ThrowsAsync<TaskCanceledException>(() => firstAccess.AsTask());
+            await Assert.ThrowsAsync<TaskCanceledException>(() => secondAccess.AsTask());
+        }
+
+        [Fact]
+        public async Task Cancellation_is_honoured_when_waiting_for_another_threads_calculation_is_cancelled()
+        {
+            // Arrange
+            var clock = new TestClock();
+            var sut = new MemoryCache(clock);
+
+            var key = _fixture.Create<string>();
+
+            var calculation = new LongRunningCalculation(_fixture.Create<int>());
+
+            // Act
+            var cancellation = new CancellationTokenSource();
+            var firstAccess = sut.GetSetAsync<int>(key, calculation);
+            await calculation.WaitForEvaluation();
+
+            var secondAccess = sut.GetSet(key, () => _fixture.Create<int>(), cancellationToken: cancellation.Token);
+
+            cancellation.Cancel();
+            await calculation.Complete();
+
+            // Assert
+            Assert.Equal(calculation.Result, await firstAccess.AsTask());
+            await Assert.ThrowsAsync<OperationCanceledException>(() => secondAccess.AsTask());
+        }
+
         public sealed class LongRunningCalculation
         {
-            private readonly TaskCompletionSource<int> _calculation = new TaskCompletionSource<int>();
-            private readonly TaskCompletionSource<object?> _evaluation = new TaskCompletionSource<object?>();
+            private readonly TaskCompletionSource<int> _calculation = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+            private readonly TaskCompletionSource<object?> _evaluation = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
             private int _evaluations = 0;
 
             public int Result { get; }
@@ -238,17 +312,25 @@ namespace DistributedCache.Tests
             /// <summary>
             /// Completes the calculation, releasing the calculation task
             /// </summary>
-            public void Complete()
+            public Task Complete()
             {
-                _calculation.SetResult(Result);
+                _calculation.TrySetResult(Result);
+                return WaitForCalculation();
             }
 
             /// <summary>
             /// Makes the calculation fail with InvalidOperationException
             /// </summary>
-            public void Fail()
+            public Task Fail()
             {
-                _calculation.SetException(new InvalidOperationException());
+                _calculation.TrySetException(new InvalidOperationException("Simulated failure"));
+                return WaitForCalculation();
+            }
+
+            private Task WaitForCalculation()
+            {
+                // Swallow exceptions
+                return _calculation.Task.ContinueWith(t => { });
             }
 
             /// <summary>
@@ -256,14 +338,16 @@ namespace DistributedCache.Tests
             /// </summary>
             public async Task WaitForEvaluation() => await _evaluation.Task;
 
-            private async ValueTask<int> Calculate()
+            private async ValueTask<int> Calculate(CancellationToken cancellationToken)
             {
                 Interlocked.Increment(ref _evaluations);
                 _evaluation.TrySetResult(null);
+
+                cancellationToken.Register(() => _calculation.TrySetCanceled());
                 return await _calculation.Task;
             }
 
-            public static implicit operator Func<ValueTask<int>>(LongRunningCalculation value) => value.Calculate;
+            public static implicit operator Func<CancellationToken, ValueTask<int>>(LongRunningCalculation value) => value.Calculate;
         }
 
         public sealed class TestClock : IClock

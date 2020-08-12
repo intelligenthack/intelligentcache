@@ -30,7 +30,7 @@ namespace IntelligentHack.DistributedCache
         private IDatabase Database => Redis.GetDatabase();
         private ISubscriber Subscriber => Redis.GetSubscriber();
 
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<ValueTask<T>> calculateValue, TimeSpan duration)
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             if (Redis.IsConnected)
             {
@@ -44,7 +44,7 @@ namespace IntelligentHack.DistributedCache
                     }
                     else
                     {
-                        var freshValue = await calculateValue();
+                        var freshValue = await calculateValue(cancellationToken);
                         var serializedValue = _valueSerializer.Serialize(freshValue);
                         var expiry = duration != TimeSpan.MaxValue ? duration : default(TimeSpan?);
                         await Database.StringSetAsync(prefixedKey, serializedValue, expiry);
@@ -60,7 +60,7 @@ namespace IntelligentHack.DistributedCache
             }
 
             // Fallback
-            return await calculateValue();
+            return await calculateValue(cancellationToken);
         }
 
         public async ValueTask Invalidate(string key)
