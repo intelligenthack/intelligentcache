@@ -6,27 +6,27 @@ namespace IntelligentHack.DistributedCache
 {
     /// <summary>
     /// Creates a two-level hierarchical cache.
-    /// Values are retrieved first from the primary level.
-    /// If no value is found, the secondary level is used.
+    /// Values are retrieved first from the first level.
+    /// If no value is found, the second level is used.
     /// </summary>
     public sealed class CompositeCache : ICache
     {
-        private readonly ICache _primary;
-        private readonly ICache _secondary;
+        private readonly ICache _level1;
+        private readonly ICache _level2;
 
-        public CompositeCache(ICache primary, ICache secondary)
+        public CompositeCache(ICache level1, ICache level2)
         {
-            _primary = primary;
-            _secondary = secondary;
+            _level1 = level1;
+            _level2 = level2;
 
-            // Propagate invalidations on the secondary to the primary.
-            _secondary.KeyInvalidated += key => _primary.Invalidate(key);
+            // Propagate invalidations on the second level to the first level.
+            _level2.KeyInvalidated += key => _level1.Invalidate(key);
         }
 
         public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
-            return _primary.GetSetAsync(key,
-                ct => _secondary.GetSetAsync(key, calculateValue, duration, ct),
+            return _level1.GetSetAsync(key,
+                ct => _level2.GetSetAsync(key, calculateValue, duration, ct),
                 duration,
                 cancellationToken
             );
@@ -34,19 +34,19 @@ namespace IntelligentHack.DistributedCache
 
         public async ValueTask Invalidate(string key)
         {
-            // The primary does not need to be invalidated because the KeyInvalidated event handler will do it.
-            await _secondary.Invalidate(key);
+            // The first level does not need to be invalidated because the KeyInvalidated event handler will do it.
+            await _level2.Invalidate(key);
         }
 
         public event Action<string> KeyInvalidated
         {
             add
             {
-                _primary.KeyInvalidated += value;
+                _level1.KeyInvalidated += value;
             }
             remove
             {
-                _primary.KeyInvalidated -= value;
+                _level1.KeyInvalidated -= value;
             }
         }
     }
