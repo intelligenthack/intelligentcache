@@ -18,85 +18,85 @@ namespace DistributedCache.Tests
         }
 
         [Fact]
-        public async Task GetSetAsync_favours_the_primary()
+        public async Task GetSetAsync_favours_level1()
         {
             // Arrange
             var key = _fixture.Create<string>();
             var value = _fixture.Create<int>();
 
-            var primary = new TestCache();
-            var secondary = new TestCache();
+            var level1 = new TestCache();
+            var level2 = new TestCache();
 
-            var sut = new CompositeCache(primary, secondary);
+            var sut = new CompositeCache(level1, level2);
 
             // Act
             var result = await sut.GetSet(key, () => value);
 
             // Assert
             Assert.Equal(value, result);
-            Assert.Equal(primary.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
-            Assert.Equal(secondary.Operations, new[] { (1, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level2.Operations, new[] { (1, nameof(TestCache.GetSetAsync), key) });
         }
 
         [Fact]
-        public async Task GetSetAsync_uses_only_the_primary_when_it_contains_a_value()
+        public async Task GetSetAsync_uses_only_level1_when_it_contains_a_value()
         {
             // Arrange
             var key = _fixture.Create<string>();
             var value = _fixture.Create<int>();
 
-            var primary = new TestCache { { key, value } };
-            var secondary = new TestCache();
+            var level1 = new TestCache { { key, value } };
+            var level2 = new TestCache();
 
-            var sut = new CompositeCache(primary, secondary);
+            var sut = new CompositeCache(level1, level2);
 
             // Act
             var result = await sut.GetSet<int>(key, () => throw new InvalidOperationException());
 
             // Assert
             Assert.Equal(value, result);
-            Assert.Equal(primary.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
-            Assert.Empty(secondary.Operations);
+            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
+            Assert.Empty(level2.Operations);
         }
 
         [Fact]
-        public async Task GetSetAsync_uses_value_from_the_secondary_when_it_contains_a_value()
+        public async Task GetSetAsync_uses_value_from_level2_when_it_contains_a_value()
         {
             // Arrange
             var key = _fixture.Create<string>();
             var value = _fixture.Create<int>();
 
-            var primary = new TestCache();
-            var secondary = new TestCache { { key, value } };
+            var level1 = new TestCache();
+            var level2 = new TestCache { { key, value } };
 
-            var sut = new CompositeCache(primary, secondary);
+            var sut = new CompositeCache(level1, level2);
 
             // Act
             var result = await sut.GetSet<int>(key, () => throw new InvalidOperationException());
 
             // Assert
             Assert.Equal(value, result);
-            Assert.Equal(primary.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
-            Assert.Equal(secondary.Operations, new[] { (1, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level2.Operations, new[] { (1, nameof(TestCache.GetSetAsync), key) });
         }
 
         [Fact]
-        public async Task Invalidate_starts_from_the_secondary()
+        public async Task Invalidate_starts_from_level2()
         {
             // Arrange
             var key = _fixture.Create<string>();
 
-            var primary = new TestCache();
-            var secondary = new TestCache();
+            var level1 = new TestCache();
+            var level2 = new TestCache();
 
-            var sut = new CompositeCache(primary, secondary);
+            var sut = new CompositeCache(level1, level2);
 
             // Act
             await sut.Invalidate(key);
 
             // Assert
-            Assert.Equal(secondary.Operations, new[] { (0, nameof(TestCache.Invalidate), key) });
-            Assert.Equal(primary.Operations, new[] { (1, nameof(TestCache.Invalidate), key) });
+            Assert.Equal(level2.Operations, new[] { (0, nameof(TestCache.Invalidate), key) });
+            Assert.Equal(level1.Operations, new[] { (1, nameof(TestCache.Invalidate), key) });
         }
 
         public sealed class TestCache : Dictionary<string, object>, ICache

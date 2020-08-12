@@ -20,8 +20,8 @@ namespace IntelligentHack.DistributedCache
                 .AddSingleton(sp => new RedisCache(redisConnectionString, redisKeyPrefix, valueSerializer ?? DefaultRedisValueSerializer.Instance, exceptionLogger))
                 .AddHostedService(sp => sp.GetRequiredService<RedisCache>())
                 .AddSingleton<ICache>(sp => new CompositeCache(
-                    primary: new MemoryCache(WallClock.Instance),
-                    secondary: sp.GetRequiredService<RedisCache>()
+                    level1: new MemoryCache(WallClock.Instance),
+                    level2: sp.GetRequiredService<RedisCache>()
                 ));
         }
     }
