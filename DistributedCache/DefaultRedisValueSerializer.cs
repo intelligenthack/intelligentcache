@@ -1,7 +1,6 @@
+using Newtonsoft.Json;
 using StackExchange.Redis;
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 
 namespace IntelligentHack.DistributedCache
 {
@@ -24,7 +23,7 @@ namespace IntelligentHack.DistributedCache
                 bool boolValue => boolValue,
                 string stringValue => stringValue,
 
-                _ => Convert.ToString(value, CultureInfo.InvariantCulture)
+                _ => JsonConvert.SerializeObject(value)
             };
         }
 
@@ -65,7 +64,7 @@ namespace IntelligentHack.DistributedCache
             string serializedValueAsString = serializedValue;
             return typeof(T) == typeof(string)
                 ? (T)(object)serializedValueAsString
-                : (T)Convert.ChangeType(serializedValueAsString, typeof(T), CultureInfo.InvariantCulture);
+                : JsonConvert.DeserializeObject<T>(serializedValueAsString);
         }
     }
 }
