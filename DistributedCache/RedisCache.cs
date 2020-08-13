@@ -81,6 +81,7 @@ namespace IntelligentHack.DistributedCache
                     // The connection error should have already been logged by who is managing the redis connection.
                 }
             }
+            KeyInvalidated?.Invoke(key);
         }
 
         public event Action<string>? KeyInvalidated;
