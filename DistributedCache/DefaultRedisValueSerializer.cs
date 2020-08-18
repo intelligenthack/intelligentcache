@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 using StackExchange.Redis;
-using System.Diagnostics.CodeAnalysis;
+using System;
 
 namespace IntelligentHack.DistributedCache
 {
@@ -27,44 +27,58 @@ namespace IntelligentHack.DistributedCache
             };
         }
 
-        [return: MaybeNull]
-        public T Deserialize<T>(RedisValue serializedValue)
+        public bool TryDeserialize<T>(RedisValue serializedValue, out T value)
         {
-            if (serializedValue.IsNull)
+            try
             {
-                return default;
+                if (serializedValue.IsNull)
+                {
+                    value = default!;
+                }
+                // This causes unnecessary boxing, but I could not find a more performant way to do this
+                else if (typeof(T) == typeof(int))
+                {
+                    value = (T)(object)(int)serializedValue;
+                }
+                else if (typeof(T) == typeof(ulong))
+                {
+                    value = (T)(object)(ulong)serializedValue;
+                }
+                else if (typeof(T) == typeof(double))
+                {
+                    value = (T)(object)(double)serializedValue;
+                }
+                else if (typeof(T) == typeof(uint))
+                {
+                    value = (T)(object)(uint)serializedValue;
+                }
+                else if (typeof(T) == typeof(long))
+                {
+                    value = (T)(object)(long)serializedValue;
+                }
+                else if (typeof(T) == typeof(bool))
+                {
+                    value = (T)(object)(bool)serializedValue;
+                }
+                else
+                {
+                    string serializedValueAsString = serializedValue;
+                    value = typeof(T) == typeof(string)
+                        ? (T)(object)serializedValueAsString
+                        : JsonConvert.DeserializeObject<T>(serializedValueAsString);
+                }
+                return true;
             }
-
-            // This causes unnecessary boxing, but I could not find a more performant way to do this
-            if (typeof(T) == typeof(int))
+            catch (InvalidCastException)
             {
-                return (T)(object)(int)serializedValue;
+                value = default!;
+                return false;
             }
-            else if (typeof(T) == typeof(ulong))
+            catch (JsonSerializationException)
             {
-                return (T)(object)(ulong)serializedValue;
+                value = default!;
+                return false;
             }
-            else if (typeof(T) == typeof(double))
-            {
-                return (T)(object)(double)serializedValue;
-            }
-            else if (typeof(T) == typeof(uint))
-            {
-                return (T)(object)(uint)serializedValue;
-            }
-            else if (typeof(T) == typeof(long))
-            {
-                return (T)(object)(long)serializedValue;
-            }
-            else if (typeof(T) == typeof(bool))
-            {
-                return (T)(object)(bool)serializedValue;
-            }
-
-            string serializedValueAsString = serializedValue;
-            return typeof(T) == typeof(string)
-                ? (T)(object)serializedValueAsString
-                : JsonConvert.DeserializeObject<T>(serializedValueAsString);
         }
     }
 }

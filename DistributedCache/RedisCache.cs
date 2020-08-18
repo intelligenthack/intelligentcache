@@ -38,9 +38,9 @@ namespace IntelligentHack.DistributedCache
                 {
                     var prefixedKey = _keyPrefix + key;
                     var hit = await Database.StringGetAsync(prefixedKey);
-                    if (hit.HasValue)
+                    if (hit.HasValue && _valueSerializer.TryDeserialize<T>(hit, out var cachedValue))
                     {
-                        return _valueSerializer.Deserialize<T>(hit);
+                        return cachedValue;
                     }
                     else
                     {
