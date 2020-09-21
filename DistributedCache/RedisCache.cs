@@ -144,42 +144,44 @@ namespace IntelligentHack.DistributedCache
             public override string ToString() => ClientId.ToString() + Key;
         }
 
-        private async Task ProcessInvalidationSubscription(CancellationToken cancellationToken)
+        private async Task ProcessInvalidationSubscription(ISubscriber subscriber, CancellationToken cancellationToken)
         {
-            if (TryGetSubscriber(out var subscriber))
+            var subscription = await subscriber.SubscribeAsync(InvalidationChannel);
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var subscription = await subscriber.SubscribeAsync(InvalidationChannel);
-                while (!cancellationToken.IsCancellationRequested)
+                try
                 {
-                    try
-                    {
-                        var rawMessage = await subscription.ReadAsync(cancellationToken);
-                        var message = InvalidationMessage.Parse(rawMessage.Message);
+                    var rawMessage = await subscription.ReadAsync(cancellationToken);
+                    var message = InvalidationMessage.Parse(rawMessage.Message);
 
-                        // Ignore my own messages
-                        if (message.ClientId != this._clientId)
-                        {
-                            KeyInvalidated?.Invoke(message.Key);
-                        }
-                    }
-                    catch (TaskCanceledException)
+                    // Ignore my own messages
+                    if (message.ClientId != this._clientId)
                     {
+                        KeyInvalidated?.Invoke(message.Key);
                     }
-                    catch (Exception ex)
-                    {
-                        _exceptionLogger(ex);
-                    }
+                }
+                catch (TaskCanceledException)
+                {
+                }
+                catch (Exception ex)
+                {
+                    _exceptionLogger(ex);
                 }
             }
         }
 
         private readonly CancellationTokenSource _subscriptionCancellation = new CancellationTokenSource();
         private Task? _subscriptionProcessor;
-        private Task? _initialConnectionTask;
+        private Task? _initialConnection;
 
         Task IHostedService.StartAsync(CancellationToken cancellationToken)
         {
-            _initialConnectionTask = Task.Run(async () =>
+            if (_initialConnection is object)
+            {
+                throw new InvalidOperationException("StartAsync has been called multiple times");
+            }
+
+            _initialConnection = Task.Run(async () =>
             {
                 var options = ConfigurationOptions.Parse(_redisConnectionString);
                 options.AbortOnConnectFail = false;
@@ -191,7 +193,7 @@ namespace IntelligentHack.DistributedCache
                     _exceptionLogger(exception);
                 };
 
-                _subscriptionProcessor = Task.Run(() => ProcessInvalidationSubscription(_subscriptionCancellation.Token));
+                _subscriptionProcessor = Task.Run(() => ProcessInvalidationSubscription(_redis.GetSubscriber(), _subscriptionCancellation.Token));
             });
 
             return Task.CompletedTask;
@@ -200,9 +202,9 @@ namespace IntelligentHack.DistributedCache
         async Task IHostedService.StopAsync(CancellationToken cancellationToken)
         {
             _subscriptionCancellation.Cancel();
-            if (_initialConnectionTask is object)
+            if (_initialConnection is object)
             {
-                await _initialConnectionTask;
+                await _initialConnection;
             }
 
             if (_redis is object)
