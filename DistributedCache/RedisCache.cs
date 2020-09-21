@@ -175,10 +175,11 @@ namespace IntelligentHack.DistributedCache
 
         private readonly CancellationTokenSource _subscriptionCancellation = new CancellationTokenSource();
         private Task? _subscriptionProcessor;
+        private Task? _initialConnectionTask;
 
         Task IHostedService.StartAsync(CancellationToken cancellationToken)
         {
-            var connectionTask = Task.Run(async () =>
+            _initialConnectionTask = Task.Run(async () =>
             {
                 var options = ConfigurationOptions.Parse(_redisConnectionString);
                 options.AbortOnConnectFail = false;
@@ -199,13 +200,17 @@ namespace IntelligentHack.DistributedCache
         async Task IHostedService.StopAsync(CancellationToken cancellationToken)
         {
             _subscriptionCancellation.Cancel();
+            if (_initialConnectionTask is object)
+            {
+                await _initialConnectionTask;
+            }
 
-            if (_redis != null)
+            if (_redis is object)
             {
                 await _redis.CloseAsync();
             }
 
-            if (_subscriptionProcessor != null)
+            if (_subscriptionProcessor is object)
             {
                 await _subscriptionProcessor;
             }
