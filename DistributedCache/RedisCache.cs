@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace IntelligentHack.DistributedCache
     /// </summary>
     public sealed class RedisCache : ICache, IHostedService
     {
-        private IConnectionMultiplexer? _redis;
+        private volatile IConnectionMultiplexer? _redis;
         private readonly string _redisConnectionString;
         private readonly string _keyPrefix;
         private readonly IRedisValueSerializer _valueSerializer;
@@ -26,18 +27,42 @@ namespace IntelligentHack.DistributedCache
             _exceptionLogger = exceptionLogger;
         }
 
-        private IConnectionMultiplexer Redis => _redis ?? throw new InvalidOperationException("IHostedService.StartAsync has not been called yet");
-        private IDatabase Database => Redis.GetDatabase();
-        private ISubscriber Subscriber => Redis.GetSubscriber();
+        private bool TryGetDatabase([NotNullWhen(true)] out IDatabase? database)
+        {
+            if (_redis is object && _redis.IsConnected)
+            {
+                database = _redis.GetDatabase();
+                return true;
+            }
+            else
+            {
+                database = default;
+                return false;
+            }
+        }
+
+        private bool TryGetSubscriber([NotNullWhen(true)] out ISubscriber? database)
+        {
+            if (_redis is object && _redis.IsConnected)
+            {
+                database = _redis.GetSubscriber();
+                return true;
+            }
+            else
+            {
+                database = default;
+                return false;
+            }
+        }
 
         public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
-            if (Redis.IsConnected)
+            if (TryGetDatabase(out var database))
             {
                 try
                 {
                     var prefixedKey = _keyPrefix + key;
-                    var hit = await Database.StringGetAsync(prefixedKey);
+                    var hit = await database.StringGetAsync(prefixedKey);
                     if (hit.HasValue && _valueSerializer.TryDeserialize<T>(hit, out var cachedValue))
                     {
                         return cachedValue;
@@ -47,7 +72,7 @@ namespace IntelligentHack.DistributedCache
                         var freshValue = await calculateValue(cancellationToken);
                         var serializedValue = _valueSerializer.Serialize(freshValue);
                         var expiry = duration != TimeSpan.MaxValue ? duration : default(TimeSpan?);
-                        await Database.StringSetAsync(prefixedKey, serializedValue, expiry);
+                        await database.StringSetAsync(prefixedKey, serializedValue, expiry);
                         await BroadcastInvalidatedKey(key);
                         return freshValue;
                     }
@@ -65,12 +90,12 @@ namespace IntelligentHack.DistributedCache
 
         public async ValueTask Invalidate(string key)
         {
-            if (Redis.IsConnected)
+            if (TryGetDatabase(out var database))
             {
                 try
                 {
                     var prefixedKey = _keyPrefix + key;
-                    if (await Database.KeyDeleteAsync(prefixedKey))
+                    if (await database.KeyDeleteAsync(prefixedKey))
                     {
                         await BroadcastInvalidatedKey(key);
                     }
@@ -90,7 +115,9 @@ namespace IntelligentHack.DistributedCache
 
         private Task BroadcastInvalidatedKey(string key)
         {
-            return Subscriber.PublishAsync(InvalidationChannel, new InvalidationMessage(_clientId, key).ToString());
+            return TryGetSubscriber(out var subscriber)
+                ? subscriber.PublishAsync(InvalidationChannel, new InvalidationMessage(_clientId, key).ToString())
+                : Task.CompletedTask;
         }
 
         private sealed class InvalidationMessage
@@ -119,26 +146,29 @@ namespace IntelligentHack.DistributedCache
 
         private async Task ProcessInvalidationSubscription(CancellationToken cancellationToken)
         {
-            var subscription = await Subscriber.SubscribeAsync(InvalidationChannel);
-            while (!cancellationToken.IsCancellationRequested)
+            if (TryGetSubscriber(out var subscriber))
             {
-                try
+                var subscription = await subscriber.SubscribeAsync(InvalidationChannel);
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    var rawMessage = await subscription.ReadAsync(cancellationToken);
-                    var message = InvalidationMessage.Parse(rawMessage.Message);
-                    
-                    // Ignore my own messages
-                    if (message.ClientId != this._clientId)
+                    try
                     {
-                        KeyInvalidated?.Invoke(message.Key);
+                        var rawMessage = await subscription.ReadAsync(cancellationToken);
+                        var message = InvalidationMessage.Parse(rawMessage.Message);
+
+                        // Ignore my own messages
+                        if (message.ClientId != this._clientId)
+                        {
+                            KeyInvalidated?.Invoke(message.Key);
+                        }
                     }
-                }
-                catch (TaskCanceledException)
-                {
-                }
-                catch (Exception ex)
-                {
-                    _exceptionLogger(ex);
+                    catch (TaskCanceledException)
+                    {
+                    }
+                    catch (Exception ex)
+                    {
+                        _exceptionLogger(ex);
+                    }
                 }
             }
         }
@@ -146,19 +176,24 @@ namespace IntelligentHack.DistributedCache
         private readonly CancellationTokenSource _subscriptionCancellation = new CancellationTokenSource();
         private Task? _subscriptionProcessor;
 
-        async Task IHostedService.StartAsync(CancellationToken cancellationToken)
+        Task IHostedService.StartAsync(CancellationToken cancellationToken)
         {
-            var options = ConfigurationOptions.Parse(_redisConnectionString);
-            options.AbortOnConnectFail = false;
-
-            _redis = await ConnectionMultiplexer.ConnectAsync(options);
-            _redis.ConnectionFailed += (_, e) =>
+            var connectionTask = Task.Run(async () =>
             {
-                var exception = e.Exception ?? new RedisConnectionException(e.FailureType, "Connection to redis failed");
-                _exceptionLogger(exception);
-            };
+                var options = ConfigurationOptions.Parse(_redisConnectionString);
+                options.AbortOnConnectFail = false;
 
-            _subscriptionProcessor = Task.Run(() => ProcessInvalidationSubscription(_subscriptionCancellation.Token));
+                _redis = await ConnectionMultiplexer.ConnectAsync(options);
+                _redis.ConnectionFailed += (_, e) =>
+                {
+                    var exception = e.Exception ?? new RedisConnectionException(e.FailureType, "Connection to redis failed");
+                    _exceptionLogger(exception);
+                };
+
+                _subscriptionProcessor = Task.Run(() => ProcessInvalidationSubscription(_subscriptionCancellation.Token));
+            });
+
+            return Task.CompletedTask;
         }
 
         async Task IHostedService.StopAsync(CancellationToken cancellationToken)
