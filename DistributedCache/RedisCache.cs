@@ -168,6 +168,8 @@ namespace IntelligentHack.DistributedCache
                     _exceptionLogger(ex);
                 }
             }
+
+            await subscriber.UnsubscribeAsync(InvalidationChannel);
         }
 
         private readonly CancellationTokenSource _subscriptionCancellation = new CancellationTokenSource();
