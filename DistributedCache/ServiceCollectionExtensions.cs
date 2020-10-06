@@ -7,8 +7,6 @@ namespace IntelligentHack.DistributedCache
     {
         /// <summary>
         /// Registers an <see cref="ICache" /> that implements a distributed cache backed on Redis.
-        /// Assumes that the following services are registered:
-        /// - IMemoryCache (call services.AddMempryCache)
         /// </summary>
         /// <param name="services"></param>
         /// <param name="redisConnectionString">The redis connection string.</param>

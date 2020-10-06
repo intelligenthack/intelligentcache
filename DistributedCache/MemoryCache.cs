@@ -5,6 +5,13 @@ using System.Threading.Tasks;
 
 namespace IntelligentHack.DistributedCache
 {
+    /// <summary>
+    /// An implementation of <see cref="ICache" /> that stores values in memory.
+    /// </summary>
+    /// <remarks>
+    /// While this implementation supports expiration, expired items are never removed from the cache.
+    /// This means that if many different cache keys are used, the memory usage will keep growing.
+    /// </remarks>
     public sealed class MemoryCache : ICache
     {
         private readonly ConcurrentDictionary<string, CacheEntry> _entries = new ConcurrentDictionary<string, CacheEntry>();
