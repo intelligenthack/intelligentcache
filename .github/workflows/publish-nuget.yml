@@ -24,7 +24,7 @@ jobs:
         dotnet-version: 3.1.*
 
     - name: Build
-      run: dotnet build ./DistributedCache/DistributedCache.csproj --configuration Release
+      run: dotnet build --configuration Release
       
     - name: Run tests
       run: dotnet test --configuration Release --no-restore
@@ -34,6 +34,6 @@ jobs:
       
     - name: Push the generated package to NuGet.org registry
       run: |
-        VERSION=`find DistributedCache/bin/Release/ -name "*.nupkg" | grep -E -o "[0-9]+\.[0-9]+\.[0-9]+"`
-        dotnet nuget push ./DistributedCache/bin/Release/IntelligentHack.DistributedCache.$VERSION.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
-        dotnet nuget delete IntelligentHack.DistributedCache $VERSION --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
+        $version = dir DistributedCache/bin/Release/*.nupkg | % { $m = $_.Name -match "IntelligentHack\.DistributedCache\.(.*)\.nupkg"; $Matches[1] }
+        dotnet nuget push ./DistributedCache/bin/Release/IntelligentHack.DistributedCache.$version.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
+        dotnet nuget delete IntelligentHack.DistributedCache $version --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
