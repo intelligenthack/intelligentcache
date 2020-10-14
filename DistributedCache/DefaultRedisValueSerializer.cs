@@ -79,6 +79,11 @@ namespace IntelligentHack.DistributedCache
                 value = default!;
                 return false;
             }
+            catch (ArgumentException)
+            {
+                value = default!;
+                return false;
+            }
         }
     }
 }
