@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -116,13 +117,13 @@ namespace IntelligentHack.DistributedCache
         private Task BroadcastInvalidatedKey(string key)
         {
             return TryGetSubscriber(out var subscriber)
-                ? subscriber.PublishAsync(InvalidationChannel, new InvalidationMessage(_clientId, key).ToString())
+                ? subscriber.PublishAsync(InvalidationChannel, new InvalidationMessage(_clientId, key))
                 : Task.CompletedTask;
         }
 
-        private sealed class InvalidationMessage
+        internal sealed class InvalidationMessage
         {
-            private static readonly int GuidStringLength = Guid.Empty.ToString().Length;
+            private const int GuidLength = 16;
 
             public InvalidationMessage(Guid clientId, string key)
             {
@@ -133,15 +134,47 @@ namespace IntelligentHack.DistributedCache
             public Guid ClientId { get; }
             public string Key { get; }
 
-            public static InvalidationMessage Parse(string serializedMessage)
+            private byte[] Encode()
             {
-                return new InvalidationMessage(
-                    Guid.Parse(serializedMessage.Substring(0, GuidStringLength)),
-                    serializedMessage.Substring(GuidStringLength)
-                );
+                var requiredLength = GuidLength + Encoding.UTF8.GetByteCount(Key);
+                var data = new byte[requiredLength];
+
+#if NETSTANDARD2_1
+                ClientId.TryWriteBytes(data);
+#else
+                Array.Copy(ClientId.ToByteArray(), data, GuidLength);
+#endif
+                Encoding.UTF8.GetBytes(Key, 0, Key.Length, data, GuidLength);
+
+                return data;
             }
 
-            public override string ToString() => ClientId.ToString() + Key;
+            private static InvalidationMessage Decode(byte[] data)
+            {
+#if NETSTANDARD2_1
+                var clientId = new Guid(data.AsSpan().Slice(0, GuidLength));
+#else
+                var clientId = new Guid(
+                    BitConverter.ToUInt32(data, 0),
+                    BitConverter.ToUInt16(data, 4),
+                    BitConverter.ToUInt16(data, 6),
+                    data[8],
+                    data[9],
+                    data[10],
+                    data[11],
+                    data[12],
+                    data[13],
+                    data[14],
+                    data[15]
+                );
+#endif
+                var key = Encoding.UTF8.GetString(data, GuidLength, data.Length - GuidLength);
+                return new InvalidationMessage(clientId, key);
+            }
+
+            public static implicit operator InvalidationMessage(RedisValue value) => Decode(value);
+
+            public static implicit operator RedisValue(InvalidationMessage message) => message.Encode();
         }
 
         private async Task ProcessInvalidationSubscription(ISubscriber subscriber, CancellationToken cancellationToken)
@@ -152,7 +185,7 @@ namespace IntelligentHack.DistributedCache
                 try
                 {
                     var rawMessage = await subscription.ReadAsync(cancellationToken);
-                    var message = InvalidationMessage.Parse(rawMessage.Message);
+                    InvalidationMessage message = rawMessage.Message;
 
                     // Ignore my own messages
                     if (message.ClientId != this._clientId)
