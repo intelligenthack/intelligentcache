@@ -55,7 +55,7 @@ namespace IntelligentHack.DistributedCache
             }
         }
 
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        public async ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             if (TryGetDatabase(out var database))
             {

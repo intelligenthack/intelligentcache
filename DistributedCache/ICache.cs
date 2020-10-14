@@ -14,7 +14,7 @@ namespace IntelligentHack.DistributedCache
         /// <param name="calculateValue">A callback that produces a new value if the key is not in cache.</param>
         /// <param name="duration">Indicates how long the value should be kept in the cache. Use <see cref="TimeSpan.MaxValue"/> to prevent expiration.</param>
         /// <returns></returns>
-        ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default);
+        ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Invalidates the specified key.
@@ -37,10 +37,10 @@ namespace IntelligentHack.DistributedCache
         /// <param name="calculateValue">A callback that produces a new value if the key is not in cache.</param>
         /// <param name="durationInSeconds">Indicates how long, in seconds, the value should be kept in the cache. Use null to prevent expiration.</param>
         /// <returns></returns>
-        public static ValueTask<T> GetSetAsync<T>(this ICache cache, string key, Func<CancellationToken, ValueTask<T>> calculateValue, int? durationInSeconds = null, CancellationToken cancellationToken = default)
+        public static ValueTask<T> GetSet<T>(this ICache cache, string key, Func<CancellationToken, ValueTask<T>> calculateValue, int? durationInSeconds = null, CancellationToken cancellationToken = default)
         {
             var duration = durationInSeconds is object ? TimeSpan.FromSeconds(durationInSeconds.Value) : TimeSpan.MaxValue;
-            return cache.GetSetAsync(key, calculateValue, duration, cancellationToken);
+            return cache.GetSet(key, calculateValue, duration, cancellationToken);
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace IntelligentHack.DistributedCache
         /// <returns></returns>
         public static ValueTask<T> GetSet<T>(this ICache cache, string key, Func<T> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default)
         {
-            return cache.GetSetAsync(key, _ => new ValueTask<T>(calculateValue()), duration, cancellationToken);
+            return cache.GetSet(key, _ => new ValueTask<T>(calculateValue()), duration, cancellationToken);
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace IntelligentHack.DistributedCache
         public static ValueTask<T> GetSet<T>(this ICache cache, string key, Func<T> calculateValue, int? durationInSeconds = null, CancellationToken cancellationToken = default)
         {
             var duration = durationInSeconds is object ? TimeSpan.FromSeconds(durationInSeconds.Value) : TimeSpan.MaxValue;
-            return cache.GetSetAsync(key, _ => new ValueTask<T>(calculateValue()), duration, cancellationToken);
+            return cache.GetSet(key, _ => new ValueTask<T>(calculateValue()), duration, cancellationToken);
         }
     }
 }

@@ -34,8 +34,8 @@ namespace DistributedCache.Tests
 
             // Assert
             Assert.Equal(value, result);
-            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
-            Assert.Equal(level2.Operations, new[] { (1, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSet), key) });
+            Assert.Equal(level2.Operations, new[] { (1, nameof(TestCache.GetSet), key) });
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace DistributedCache.Tests
 
             // Assert
             Assert.Equal(value, result);
-            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSet), key) });
             Assert.Empty(level2.Operations);
         }
 
@@ -76,8 +76,8 @@ namespace DistributedCache.Tests
 
             // Assert
             Assert.Equal(value, result);
-            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSetAsync), key) });
-            Assert.Equal(level2.Operations, new[] { (1, nameof(TestCache.GetSetAsync), key) });
+            Assert.Equal(level1.Operations, new[] { (0, nameof(TestCache.GetSet), key) });
+            Assert.Equal(level2.Operations, new[] { (1, nameof(TestCache.GetSet), key) });
         }
 
         [Fact]
@@ -107,9 +107,9 @@ namespace DistributedCache.Tests
 
             public List<(int order, string name, string key)> Operations { get; } = new List<(int, string, string)>();
 
-            public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+            public async ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
             {
-                Operations.Add((OperationCounter++, nameof(GetSetAsync), key));
+                Operations.Add((OperationCounter++, nameof(GetSet), key));
 
                 if (!TryGetValue(key, out var value))
                 {

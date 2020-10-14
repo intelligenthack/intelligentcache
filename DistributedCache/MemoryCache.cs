@@ -113,7 +113,7 @@ namespace IntelligentHack.DistributedCache
 
         public event Action<string>? KeyInvalidated;
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             var entry = _entries.GetOrAdd(key, _ => new CacheEntry());
             return entry.GetSet(_clock.UtcNow, calculateValue, duration, cancellationToken);

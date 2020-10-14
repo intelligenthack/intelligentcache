@@ -105,7 +105,7 @@ namespace DistributedCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSetAsync<int>(key, calculation);
+            var firstAccess = sut.GetSet<int>(key, calculation);
             await calculation.WaitForEvaluation();
 
             var secondAccess = sut.GetSet(key, () => counter++);
@@ -137,7 +137,7 @@ namespace DistributedCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSetAsync<int>(key, calculation);
+            var firstAccess = sut.GetSet<int>(key, calculation);
             await calculation.WaitForEvaluation();
 
             var secondAccess = sut.GetSet(key, () => counter++);
@@ -171,7 +171,7 @@ namespace DistributedCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSetAsync<int>(key, calculation).AsTask();
+            var firstAccess = sut.GetSet<int>(key, calculation).AsTask();
             await calculation.WaitForEvaluation();
 
             var secondAccess = sut.GetSet(key, () => counter++);
@@ -207,7 +207,7 @@ namespace DistributedCache.Tests
             var counter = 0;
 
             // Act
-            var timeout = sut.GetSetAsync(key, async ct =>
+            var timeout = sut.GetSet(key, async ct =>
             {
                 await Task.Delay(1000, new CancellationTokenSource(10).Token);
                 return counter++;
@@ -235,7 +235,7 @@ namespace DistributedCache.Tests
 
             // Act
             var cancellation = new CancellationTokenSource();
-            var cancelled = sut.GetSetAsync<int>(key, calculation, cancellationToken: cancellation.Token);
+            var cancelled = sut.GetSet<int>(key, calculation, cancellationToken: cancellation.Token);
             await calculation.WaitForEvaluation();
 
             cancellation.Cancel();
@@ -257,7 +257,7 @@ namespace DistributedCache.Tests
 
             // Act
             var cancellation = new CancellationTokenSource();
-            var firstAccess = sut.GetSetAsync<int>(key, calculation, cancellationToken: cancellation.Token);
+            var firstAccess = sut.GetSet<int>(key, calculation, cancellationToken: cancellation.Token);
             await calculation.WaitForEvaluation();
 
             var secondAccess = sut.GetSet(key, () => _fixture.Create<int>());
@@ -282,7 +282,7 @@ namespace DistributedCache.Tests
 
             // Act
             var cancellation = new CancellationTokenSource();
-            var firstAccess = sut.GetSetAsync<int>(key, calculation);
+            var firstAccess = sut.GetSet<int>(key, calculation);
             await calculation.WaitForEvaluation();
 
             var secondAccess = sut.GetSet(key, () => _fixture.Create<int>(), cancellationToken: cancellation.Token);

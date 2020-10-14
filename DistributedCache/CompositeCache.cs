@@ -23,10 +23,10 @@ namespace IntelligentHack.DistributedCache
             _level2.KeyInvalidated += key => _level1.Invalidate(key);
         }
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
-            return _level1.GetSetAsync(key,
-                ct => _level2.GetSetAsync(key, calculateValue, duration, ct),
+            return _level1.GetSet(key,
+                ct => _level2.GetSet(key, calculateValue, duration, ct),
                 duration,
                 cancellationToken
             );
