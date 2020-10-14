@@ -1,0 +1,1 @@
+The `.drawio.svg` files can be edited with draw.io. There is a [plugin for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio) that allows to edit these files directly.
