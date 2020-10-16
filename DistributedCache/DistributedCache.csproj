@@ -19,6 +19,9 @@ The cache has two levels. The first one is in memory and the second one is Redis
         <PackageTags>Cache;Redis;AspNet</PackageTags>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <Company>Intelligent Hack srls</Company>
+        
+        <GitVersion_NoFetchEnabled>true</GitVersion_NoFetchEnabled>
+        <GitVersion_NoNormalizeEnabled>true</GitVersion_NoNormalizeEnabled>
     </PropertyGroup>
 
     <PropertyGroup>

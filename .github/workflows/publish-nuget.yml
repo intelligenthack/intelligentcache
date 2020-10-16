@@ -1,14 +1,17 @@
-name: Build and publish package
+name: Release the package
 
 on:
-  workflow_dispatch: {}
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit to release
+        required: false
+  release:
+    types: [published]
 
 jobs:
   build:
+    name: Publish package
     runs-on: windows-latest
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -17,6 +20,14 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+        ref: ${{ github.event.inputs.ref }}
+
+    - name: Ensure that there is a branch
+      run: |
+        git symbolic-ref -q HEAD
+        if ($LASTEXITCODE -ne 0) {
+          git checkout -b master
+        }
 
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
@@ -24,16 +35,18 @@ jobs:
         dotnet-version: 3.1.*
 
     - name: Build
-      run: dotnet build --configuration Release
-      
+      run: del Env:\GITHUB_ACTIONS ; dotnet build --configuration Release
+
     - name: Run tests
-      run: dotnet test --configuration Release --no-restore
+      run: del Env:\GITHUB_ACTIONS ; dotnet test --configuration Release --no-restore
 
     - name: Pack
-      run: dotnet pack ./DistributedCache/DistributedCache.csproj --configuration Release --no-restore
-      
-    - name: Push the generated package to NuGet.org registry
-      run: |
-        $version = dir DistributedCache/bin/Release/*.nupkg | % { $m = $_.Name -match "IntelligentHack\.DistributedCache\.(.*)\.nupkg"; $Matches[1] }
-        dotnet nuget push ./DistributedCache/bin/Release/IntelligentHack.DistributedCache.$version.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
-        dotnet nuget delete IntelligentHack.DistributedCache $version --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
+      run: del Env:\GITHUB_ACTIONS ; dotnet pack ./DistributedCache/DistributedCache.csproj --configuration Release --no-restore
+
+
+
+    # - name: Push the generated package to NuGet.org registry
+    #   run: |
+    #     $version = dir DistributedCache/bin/Release/*.nupkg | % { $m = $_.Name -match "IntelligentHack\.DistributedCache\.(.*)\.nupkg"; $Matches[1] }
+    #     dotnet nuget push ./DistributedCache/bin/Release/IntelligentHack.DistributedCache.$version.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
+    #     dotnet nuget delete IntelligentHack.DistributedCache $version --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
