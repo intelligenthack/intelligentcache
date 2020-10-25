@@ -1,11 +1,35 @@
+![distributed cache](https://github.com/intelligenthack/distributed-cache/blob/master/doc/logo_distributed-cache_color-whitebg_544x240.png?raw=true)
+
 # Distributed Cache
 
-This package implements a distributed cache backed by Redis.
+This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.
 
-The cache has two levels. The first one is in memory and the second one is Redis.
-When looking up a key, the memory cache is checked first. If the value is not found, redis is checked. The underlying data source is only consulted if the key is not found in any cache level.
+To use the pattern, you will interact with an object of type ICache, where you can use the following operations:
 
-## Configuration
+```
+ICache myCache = get-cache-singleton();
+
+// Get something from the cache, on cache fail the Func is called to refresh the value and stored
+var foo = myCache.GetSet("foo-cache-key", ()=>{ return foo-from-db(); }, 3660 /* seconds */);
+
+// Invalidate the cache, in case we've modified foo in the db so the cache is stale
+myCache.Invalidate();
+
+```
+
+The `ICache` object can be of different kinds -- we currently offer a memory cache for local caching and a Redis cache for distributed caching. What makes the pattern a monad is that different caches can be *composed* and this allows seamless multilayer caching.
+
+For example, to implement a multilayer cache with a local layer and a Redis layer:
+
+```
+var memoryCache = new MemoryCache();
+var redisCache = new RedisCache(/* params */);
+var cache = new CompositeCache(memoryCache, redisCache);
+```
+
+That's all you need. All operations are already correctly wired to implement the two layer. Clearly you can add more layers and types as you need.
+
+## Using with Asp.Net-Core
 
 Register the required services by calling the `AddRedisDistributedCache` method. This method has the following parameters:
 
