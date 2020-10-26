@@ -223,3 +223,7 @@ This package follows [semantic versioning](https://semver.org/), which means tha
 # Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+# License
+
+This code is released under the MIT license. Please refer to [LICENSE.md](LICENSE.md) for details.
