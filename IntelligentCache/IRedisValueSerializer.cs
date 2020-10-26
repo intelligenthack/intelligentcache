@@ -1,5 +1,4 @@
 using StackExchange.Redis;
-using System.Diagnostics.CodeAnalysis;
 
 namespace IntelligentHack.IntelligentCache
 {

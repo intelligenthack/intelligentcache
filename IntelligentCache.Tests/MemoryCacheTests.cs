@@ -12,7 +12,7 @@ namespace IntelligentCache.Tests
         private readonly Fixture _fixture = new Fixture();
 
         [Fact]
-        public async Task Item_is_calculated_when_the_cache_is_empty()
+        public async Task Item_is_calculated_when_the_cache_is_empty_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -21,7 +21,7 @@ namespace IntelligentCache.Tests
             var counter = 0;
 
             // Act
-            var addedValue = await sut.GetSet(key, () => counter++);
+            var addedValue = await sut.GetSetAsync(key, () => counter++);
 
             // Assert
             Assert.Equal(0, addedValue);
@@ -29,7 +29,7 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Item_is_reused_when_the_cache_contains_it()
+        public void Item_is_calculated_when_the_cache_is_empty()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -37,10 +37,27 @@ namespace IntelligentCache.Tests
             var key = _fixture.Create<string>();
             var counter = 0;
 
-            var initialValue = await sut.GetSet(key, () => counter++);
+            // Act
+            var addedValue = sut.GetSet(key, () => counter++);
+
+            // Assert
+            Assert.Equal(0, addedValue);
+            Assert.Equal(1, counter);
+        }
+
+        [Fact]
+        public async Task Item_is_reused_when_the_cache_contains_it_async()
+        {
+            // Arrange
+            var sut = new MemoryCache();
+
+            var key = _fixture.Create<string>();
+            var counter = 0;
+
+            var initialValue = await sut.GetSetAsync(key, () => counter++);
 
             // Act
-            var cachedValue = await sut.GetSet(key, () => counter++);
+            var cachedValue = await sut.GetSetAsync(key, () => counter++);
 
             // Assert
             Assert.Equal(initialValue, cachedValue);
@@ -48,7 +65,26 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Item_is_recalculated_after_it_expires()
+        public void Item_is_reused_when_the_cache_contains_it()
+        {
+            // Arrange
+            var sut = new MemoryCache();
+
+            var key = _fixture.Create<string>();
+            var counter = 0;
+
+            var initialValue = sut.GetSet(key, () => counter++);
+
+            // Act
+            var cachedValue = sut.GetSet(key, () => counter++);
+
+            // Assert
+            Assert.Equal(initialValue, cachedValue);
+            Assert.Equal(1, counter);
+        }
+
+        [Fact]
+        public async Task Item_is_recalculated_after_it_expires_async()
         {
             // Arrange
             var clock = new TestClock();
@@ -61,11 +97,11 @@ namespace IntelligentCache.Tests
             var counter = 0;
             var expiration = TimeSpan.FromSeconds(_fixture.Create<uint>());
 
-            var initialValue = await sut.GetSet(key, () => counter++, expiration);
+            var initialValue = await sut.GetSetAsync(key, () => counter++, expiration);
             clock.AdvanceBy(expiration);
 
             // Act
-            var recalculatedValue = await sut.GetSet(key, () => counter++);
+            var recalculatedValue = await sut.GetSetAsync(key, () => counter++);
 
             // Assert
             Assert.Equal(1, recalculatedValue);
@@ -73,7 +109,29 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Item_is_recalculated_after_it_is_invalidated()
+        public void Item_is_recalculated_after_it_expires()
+        {
+            // Arrange
+            var clock = new TestClock();
+            var sut = new MemoryCache { Clock = clock };
+
+            var key = _fixture.Create<string>();
+            var counter = 0;
+            var expiration = TimeSpan.FromSeconds(_fixture.Create<uint>());
+
+            var initialValue = sut.GetSet(key, () => counter++, expiration);
+            clock.AdvanceBy(expiration);
+
+            // Act
+            var recalculatedValue = sut.GetSet(key, () => counter++);
+
+            // Assert
+            Assert.Equal(1, recalculatedValue);
+            Assert.Equal(2, counter);
+        }
+
+        [Fact]
+        public async Task Item_is_recalculated_after_it_is_invalidated_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -81,11 +139,11 @@ namespace IntelligentCache.Tests
             var key = _fixture.Create<string>();
             var counter = 0;
 
-            var initialValue = await sut.GetSet(key, () => counter++);
-            await sut.Invalidate(key);
+            var initialValue = await sut.GetSetAsync(key, () => counter++);
+            await sut.InvalidateAsync(key);
 
             // Act
-            var recalculatedValue = await sut.GetSet(key, () => counter++);
+            var recalculatedValue = await sut.GetSetAsync(key, () => counter++);
 
             // Assert
             Assert.Equal(1, recalculatedValue);
@@ -93,7 +151,27 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Concurrent_requests_reuse_the_same_item_calculation()
+        public void Item_is_recalculated_after_it_is_invalidated()
+        {
+            // Arrange
+            var sut = new MemoryCache();
+
+            var key = _fixture.Create<string>();
+            var counter = 0;
+
+            var initialValue = sut.GetSet(key, () => counter++);
+            sut.Invalidate(key);
+
+            // Act
+            var recalculatedValue = sut.GetSet(key, () => counter++);
+
+            // Assert
+            Assert.Equal(1, recalculatedValue);
+            Assert.Equal(2, counter);
+        }
+
+        [Fact]
+        public async Task Concurrent_requests_reuse_the_same_item_calculation_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -104,10 +182,10 @@ namespace IntelligentCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSet<int>(key, calculation);
+            var firstAccess = sut.GetSetAsync<int>(key, calculation);
             await calculation.WaitForEvaluation();
 
-            var secondAccess = sut.GetSet(key, () => counter++);
+            var secondAccess = sut.GetSetAsync(key, () => counter++);
 
             Assert.False(firstAccess.IsCompleted);
             Assert.False(secondAccess.IsCompleted);
@@ -124,7 +202,7 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Invalidation_overrides_pending_calculation()
+        public async Task Invalidation_overrides_pending_calculation_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -135,14 +213,14 @@ namespace IntelligentCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSet<int>(key, calculation);
+            var firstAccess = sut.GetSetAsync<int>(key, calculation);
             await calculation.WaitForEvaluation();
 
-            var secondAccess = sut.GetSet(key, () => counter++);
+            var secondAccess = sut.GetSetAsync(key, () => counter++);
 
-            await sut.Invalidate(key);
+            await sut.InvalidateAsync(key);
 
-            var recalculatedValue = await sut.GetSet(key, () => counter++);
+            var recalculatedValue = await sut.GetSetAsync(key, () => counter++);
 
             await calculation.Complete();
 
@@ -157,7 +235,7 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Exceptions_are_not_cached()
+        public async Task Exceptions_are_not_cached_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -168,10 +246,10 @@ namespace IntelligentCache.Tests
             var calculation = new LongRunningCalculation(_fixture.Create<int>());
 
             // Act
-            var firstAccess = sut.GetSet<int>(key, calculation).AsTask();
+            var firstAccess = sut.GetSetAsync<int>(key, calculation).AsTask();
             await calculation.WaitForEvaluation();
 
-            var secondAccess = sut.GetSet(key, () => counter++);
+            var secondAccess = sut.GetSetAsync(key, () => counter++);
 
             await calculation.Fail();
 
@@ -179,7 +257,7 @@ namespace IntelligentCache.Tests
             // Before that we can't be sure that the cache had a chance to remove the result from the cache.
             await firstAccess.ContinueWith(_ => { });
 
-            var recalculatedValue = await sut.GetSet(key, () => counter++);
+            var recalculatedValue = await sut.GetSetAsync(key, () => counter++);
 
             // Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() => firstAccess);
@@ -194,7 +272,7 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Timeouts_work_like_exceptions()
+        public async Task Timeouts_work_like_exceptions_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -203,7 +281,7 @@ namespace IntelligentCache.Tests
             var counter = 0;
 
             // Act
-            var timeout = sut.GetSet(key, async ct =>
+            var timeout = sut.GetSetAsync(key, async ct =>
             {
                 await Task.Delay(1000, new CancellationTokenSource(10).Token);
                 return counter++;
@@ -211,7 +289,7 @@ namespace IntelligentCache.Tests
 
             await Assert.ThrowsAsync<TaskCanceledException>(() => timeout.AsTask());
 
-            var recalculatedValue = await sut.GetSet(key, () => counter++);
+            var recalculatedValue = await sut.GetSetAsync(key, () => counter++);
 
             // Assert
             Assert.Equal(0, recalculatedValue);
@@ -219,7 +297,7 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Cancellation_is_honoured_when_calculating_the_value()
+        public async Task Cancellation_is_honoured_when_calculating_the_value_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -230,17 +308,17 @@ namespace IntelligentCache.Tests
 
             // Act
             var cancellation = new CancellationTokenSource();
-            var cancelled = sut.GetSet<int>(key, calculation, cancellationToken: cancellation.Token);
+            var cancelled = sut.GetSetAsync<int>(key, calculation, cancellationToken: cancellation.Token);
             await calculation.WaitForEvaluation();
 
             cancellation.Cancel();
-            
+
             // Assert
             await Assert.ThrowsAsync<TaskCanceledException>(() => cancelled.AsTask());
         }
 
         [Fact]
-        public async Task Cancellation_of_the_calculation_is_honoured_when_waiting_for_another_threads_calculation()
+        public async Task Cancellation_of_the_calculation_is_honoured_when_waiting_for_another_threads_calculation_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -251,10 +329,10 @@ namespace IntelligentCache.Tests
 
             // Act
             var cancellation = new CancellationTokenSource();
-            var firstAccess = sut.GetSet<int>(key, calculation, cancellationToken: cancellation.Token);
+            var firstAccess = sut.GetSetAsync<int>(key, calculation, cancellationToken: cancellation.Token);
             await calculation.WaitForEvaluation();
 
-            var secondAccess = sut.GetSet(key, () => _fixture.Create<int>());
+            var secondAccess = sut.GetSetAsync(key, () => _fixture.Create<int>());
 
             cancellation.Cancel();
 
@@ -264,7 +342,7 @@ namespace IntelligentCache.Tests
         }
 
         [Fact]
-        public async Task Cancellation_is_honoured_when_waiting_for_another_threads_calculation_is_cancelled()
+        public async Task Cancellation_is_honoured_when_waiting_for_another_threads_calculation_is_cancelled_async()
         {
             // Arrange
             var sut = new MemoryCache();
@@ -275,10 +353,10 @@ namespace IntelligentCache.Tests
 
             // Act
             var cancellation = new CancellationTokenSource();
-            var firstAccess = sut.GetSet<int>(key, calculation);
+            var firstAccess = sut.GetSetAsync<int>(key, calculation);
             await calculation.WaitForEvaluation();
 
-            var secondAccess = sut.GetSet(key, () => _fixture.Create<int>(), cancellationToken: cancellation.Token);
+            var secondAccess = sut.GetSetAsync(key, () => _fixture.Create<int>(), cancellationToken: cancellation.Token);
 
             cancellation.Cancel();
             await calculation.Complete();
@@ -287,7 +365,6 @@ namespace IntelligentCache.Tests
             Assert.Equal(calculation.Result, await firstAccess.AsTask());
             await Assert.ThrowsAsync<OperationCanceledException>(() => secondAccess.AsTask());
         }
-
         public sealed class LongRunningCalculation
         {
             private readonly TaskCompletionSource<int> _calculation = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);

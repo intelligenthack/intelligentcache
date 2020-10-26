@@ -4,16 +4,16 @@
 
 This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.
 
-To use the pattern, you will interact with an object of type ICache, where you can use the following operations:
+To use the pattern, you will interact with an object of type ICache, where you can use the following operations for the async case:
 
-```
+```c#
 ICache myCache = get-cache-singleton();
 
 // Get something from the cache, on cache fail the Func is called to refresh the value and stored
-var foo = myCache.GetSet("foo-cache-key", ()=>{ return foo-from-db(); }, 3660 /* seconds */);
+var foo = myCache.GetSetAsync("foo-cache-key", ()=>{ return foo-from-db(); }, 3660 /* seconds */);
 
 // Invalidate the cache, in case we've modified foo in the db so the cache is stale
-myCache.Invalidate();
+myCache.InvalidateAsync("foo-cache-key");
 
 ```
 
@@ -21,26 +21,43 @@ The `ICache` object can be of different kinds -- we currently offer a memory cac
 
 For example, to implement a multilayer cache with a local layer and a Redis layer:
 
-```
+```c#
+var redis = new RedisConnection(/* connection string */);
+redis.StartAsync(/* cancellation token */);
+
 var memoryCache = new MemoryCache();
-var redisCache = new RedisCache(/* connection string */);
-redisCache.StartAsync(/* cancelation token */);
+var redisCache = new RedisCache(redis);
 var cache = new CompositeCache(memoryCache, redisCache);
 ```
 
-Note that `RedisCache` class implements `IHostedService`, since it needs to start a background task. That is why `StartAsync` should be called after instantiating the cache. Another way of doing so is using `AddHostedService` as shown in the following section. 
+Note that `RedisConnection` class implements `IHostedService`, since it needs to start a background task. That is why `StartAsync` should be called after instantiating the cache. Another way of doing so is using `AddHostedService` as shown in the "Using with Asp.Net-Core" section. 
 
-That's all you need. All operations are already correctly wired to implement the two layer. Clearly you can add more layers and types as you need.
+With the above configuration, when a key is invalidated in one process, other processes may still have that key in their memory cache. The `RedisInvalidationPropagator` class can be used to propagate the invalidations across processes as follows:
+
+```c#
+var redis = new RedisConnection(/* connection string */);
+redis.StartAsync(/* cancellation token */);
+
+var memoryCache = new MemoryCache();
+var redisCache = new RedisCache(redis);
+
+var cache = new RedisInvalidationPropagator(
+    new CompositeCache(memoryCache, redisCache),
+    redis
+);
+```
+
+That's all you need. All operations are already correctly wired to implement the two layers. Clearly you can add more layers and types as you need.
 
 Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
-```
+```c#
 public void ConfigureServices(IServiceCollection services)
 {
     services.AddRedisIntelligentCache(new RedisCache("localhost:6379"));
 }
 ```
 Even customize `RedisCache`:
-```
+```c#
 public void ConfigureServices(IServiceCollection services)
 {
     services.AddRedisIntelligentCache(new RedisCache("localhost:6379")
@@ -56,9 +73,9 @@ public void ConfigureServices(IServiceCollection services)
 
 ### Reading a value from the cache
 
-There is a single operation to read from the cache and compute the value in case of a miss, called `GetSet`. It takes a cache key, a callback and a duration. If the cache contains a value for the specified key, that value is returned immediately. Otherwise, the callback is invoked to compute the value, which is then stored into the cache for the specified duration.
+There is a single operation to read from the cache and compute the value in case of a miss, called `GetSetAsync` or `GetSet` for the synchronous version. It takes a cache key, a callback and a duration. If the cache contains a value for the specified key, that value is returned immediately. Otherwise, the callback is invoked to compute the value, which is then stored into the cache for the specified duration.
 
-In most cases, caching data is as simple as wrapping the existing code by a call to `GetSet`.
+In most cases, caching data is as simple as wrapping the existing code by a call to `GetSet` or `GetSetAsync`.
 
 The following example shows how to get a value from the cache.
 
@@ -67,7 +84,7 @@ ICache cache = ...; // Get the cache from the DI container
 string contentId = ...;
 string cacheKey = "<some unique constructed key value, usually derived from contentId>";
 
-var cachedValue = await cache.GetSet(cacheKey, async () =>
+var cachedValue = await cache.GetSetAsync(cacheKey, async () =>
 {
     // Read the value from the DB.
     // This callback will only be executed if the value was not found in the cache.
@@ -79,18 +96,18 @@ var cachedValue = await cache.GetSet(cacheKey, async () =>
 }, 10); // Keep in cache for 10 seconds
 ```
 
-The `GetSet` method has multiple overloads to allow different representations of the same parameters, which can be summarized as follows.
+The `GetSet` and the corresponding async methods have multiple overloads to allow different representations of the same parameters, which can be summarized as follows.
 
 | Name | Description
 |-|-|
 | `key` | The key used to lookup the value. This must uniquely identify the content and, in general, should be derived from the identifier of the value. |
 | `calculateValue` | A callback that is invoked in case of a cache miss to calculate the value. |
 | `duration` / `durationInSeconds` | How long the value should be kept in the cache. If this parameter is omitted, the item never expires. |
-| `cancellationToken` | An optional `CancellationToken` to cancel the asynchronous operations. |
+| `cancellationToken` | An optional `CancellationToken` to cancel the asynchronous operations, only present in `GetSetAsync`. |
 
 ### Invalidating a value from the cache
 
-When the source of cached data is modified, it may be desirable to invalidate the corresponding cache entry so that updated content is returned the next time it is requested. This is performed by calling the `Invalidate` method, as shown in the following example.
+When the source of cached data is modified, it may be desirable to invalidate the corresponding cache entry so that updated content is returned the next time it is requested. This is performed by calling the `Invalidate` method, or the async version, as shown in the following example.
 
 ```c#
 ICache cache = ...; // Get the cache from the DI container
@@ -106,10 +123,10 @@ await sqlConnection.ExecuteAsync(
 );
 
 // Invalidate the cache
-await cache.Invalidate(cacheKey);
+await cache.InvalidateAsync(cacheKey);
 ```
 
-The `Invalidate` method takes the following parameters:
+The `InvalidateAsync` method takes the following parameters:
 
 | Name | Description
 |-|-|
@@ -119,32 +136,38 @@ The `Invalidate` method takes the following parameters:
 
 Register the cache as a services in your service collection by using the following code:
 
-```
- services
-    .AddSingleton(sp => new RedisCache(redisConnectionString))
-    .AddHostedService(sp => sp.GetRequiredService<RedisCache>())
-    .AddSingleton<ICache>(sp => new CompositeCache(
+```c#
+var redis = new RedisConnection(redisConnectionString);
+
+var cache = new RedisInvalidationPropagator(
+    new CompositeCache(
         level1: new MemoryCache(),
-        level2: sp.GetRequiredService<RedisCache>()
-    ));
+        level2: new RedisCache(redis)
+    ),
+    redis
+);
+
+services
+    .AddSingleton<ICache>(sp => cache)
+    .AddHostedService(sp => redis);
 ```
 
 Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
-```
+```c#
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddRedisIntelligentCache(new RedisCache("localhost:6379"));
+    services.AddRedisIntelligentCache("localhost:6379");
 }
 ```
 Even customize `RedisCache`:
-```
+```c#
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddRedisIntelligentCache(new RedisCache("localhost:6379")
+    services.AddRedisIntelligentCache("localhost:6379", options =>
     {
-        ExceptionLogger = ex => Console.WriteLine(ex),
-        KeyPrefix = ":mychache",
-        ValueSerializer = new MyRedisValueSerializerImplementacion()
+        options.ExceptionLogger = ex => Console.WriteLine(ex);
+        options.KeyPrefix = "mychache:";
+        options.ValueSerializer = new MyRedisValueSerializerImplementation();
     });
 }
 ```
@@ -157,16 +180,16 @@ It is possible to customize the serialization, exception logs and key prefix app
 Serialization can be customized by setting an implementation of `IRedisValueSerializer` to the `ValueSerializer` property on `RedisCache` class.
 
 #### Custom exception logs
-Exception logs can be changed by providing a new action for `ExceptionLogger` property. By default all exception will be logged in the `Console`.  
+Exception logs can be changed by providing a new action for `ExceptionLogger` property. By default all exception will be logged to stderr.
 
 #### Custom key prefix
-A new key prefix of your choice can be applied by assigning it to `KeyPrefix` property .  
+A new key prefix of your choice can be applied by assigning it to `KeyPrefix` property .
 
 # Architecture
 
 A cache is a component that stores previously computed values for a period of time, so that the next time the value is needed, the computation can be avoided. The premise is that it is cheaper to look-up a value from the cache than computing that value.
 
-This library implements a cache with multiple hierarchical levels. It means that whenever a lookup is performed, the first level is checked. If a value is found (hit), that value is returned and the second level is not contacted. If the value is not found in the first level (miss), the second level is checked ans so on, recursively. 
+This library implements a cache with multiple hierarchical levels. It means that whenever a lookup is performed, the first level is checked. If a value is found (hit), that value is returned and the second level is not contacted. If the value is not found in the first level (miss), the second level is checked ans so on, recursively.
 
 ![A sequence diagram showing three interactions between the application and two cache levels. In the first one, the application requests a key which is found in the first level and returned immediately. In that case the second level isn't contacted at all. In the second interaction, the application requests a key which is not found on the first level, but is found on the second level. The value is stored in the first level and returned to the application. The last interaction shows the application requesting a key that is not found in either cache levels. A new value is then computed, which is stored into both levels.](doc/levels.drawio.svg)
 
@@ -179,15 +202,11 @@ Cache invalidation requires synchronization between all the instances of the app
 
 ## Consistency considerations
 
-The cache makes no consistency guarantees. Two instances of the application might contain different values for a given key. The Redis level reduces the likelihood of inconsistencies since it serves as a shared source for all instances of the application. 
+The cache makes no consistency guarantees. Two instances of the application might contain different values for a given key. The Redis level reduces the likelihood of inconsistencies since it serves as a shared source for all instances of the application.
 
 There are no consistency guarantees between different instances of the application. It is possible for two instances of the application to have different versions of the same data in cache, as illustrated in the following diagram.
 
 ![A temporal diagram that shows how different instances of the application can have an inconsistent view of the same data. Instance A requests a key which is found in the Redis level and stored in the in-memory level. Later, that value expires from Redis. When another instance of the application requests the same key, a new value is computed and stored in that instance's memory level. Until the old value expires from the first application instance's memory level, that instance still sees the old value.](doc/consistency.drawio.svg)
-
-In order to minimize inconsistency window, after the Redis cache computes a value, it invalidates all other instances so that the inconsistency window is shortened. The following diagram shows this process.
-
-![The same temporal diagram as before, with the difference that after the Redis level computes a new value, it invalidates the first application instance's cache, therefore reducing the time window during which the different instances are inconsistent.](doc/consistency-improved.drawio.svg)
 
 # Requirements and best practices
 
@@ -215,7 +234,7 @@ ICache cache = ...; // Get the cache from the DI container
 string contentId = ...;
 string cacheKey = $"content:{contentId}";
 
-var content = await cache.GetSet(cacheKey, async () =>
+var content = await cache.GetSetAsync(cacheKey, async () =>
 {
     // Read the value from the DB.
     // This callback will only be executed if the value was not found in the cache.

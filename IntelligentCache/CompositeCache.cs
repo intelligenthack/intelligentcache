@@ -18,36 +18,34 @@ namespace IntelligentHack.IntelligentCache
         {
             _level1 = level1;
             _level2 = level2;
-
-            // Propagate invalidations on the second level to the first level.
-            _level2.KeyInvalidated += key => _level1.Invalidate(key);
         }
-
-        public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
-            return _level1.GetSet(key,
-                ct => _level2.GetSet(key, calculateValue, duration, ct),
+            return _level1.GetSetAsync(key,
+                ct => _level2.GetSetAsync(key, calculateValue, duration, ct),
                 duration,
                 cancellationToken
             );
         }
 
-        public async ValueTask Invalidate(string key)
+        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration)
         {
-            // The first level does not need to be invalidated because the KeyInvalidated event handler will do it.
-            await _level2.Invalidate(key);
+            return _level1.GetSet(key,
+                () =>_level2.GetSet(key, calculateValue, duration),
+                duration
+            );
         }
 
-        public event Action<string> KeyInvalidated
+        public async ValueTask InvalidateAsync(string key, bool wasTriggeredLocally = true, CancellationToken cancellationToken = default)
         {
-            add
-            {
-                _level1.KeyInvalidated += value;
-            }
-            remove
-            {
-                _level1.KeyInvalidated -= value;
-            }
+            await _level2.InvalidateAsync(key, wasTriggeredLocally, cancellationToken);
+            await _level1.InvalidateAsync(key, wasTriggeredLocally, cancellationToken);
+        }
+
+        public void Invalidate(string key, bool wasTriggeredLocally = true)
+        {
+            _level2.Invalidate(key, wasTriggeredLocally);
+            _level1.Invalidate(key, wasTriggeredLocally);
         }
     }
 }

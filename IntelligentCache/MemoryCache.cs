@@ -15,7 +15,7 @@ namespace IntelligentHack.IntelligentCache
     public sealed class MemoryCache : ICache
     {
         private readonly ConcurrentDictionary<string, CacheEntry> _entries = new ConcurrentDictionary<string, CacheEntry>();
-        
+
         public MemoryCache()
         {
             this.Clock = WallClock.Instance;
@@ -25,38 +25,41 @@ namespace IntelligentHack.IntelligentCache
 
         private sealed class CacheEntry
         {
-            private TaskCompletionSource<object?>? _valuePromise;
+            private JoinableTaskCompletionSource<object?>? _valuePromise;
             private DateTime _expiration;
 
-            public async ValueTask<T> GetSet<T>(DateTime now, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+            private bool GetSetLocked(DateTime now, TimeSpan duration, out JoinableTaskCompletionSource<object?> currentValuePromise)
+            {
+                lock (this)
+                {
+                    if (this._valuePromise is null || _expiration <= now)
+                    {
+                        currentValuePromise = new JoinableTaskCompletionSource<object?>();
+                        _valuePromise = currentValuePromise;
+                        _expiration = duration != TimeSpan.MaxValue
+                            ? now.Add(duration)
+                            : DateTime.MaxValue;
+                        return true;
+                    }
+                    else
+                    {
+                        currentValuePromise = this._valuePromise;
+                    }
+                    return false;
+                }
+            }
+
+            public async ValueTask<T> GetSetAsync<T>(DateTime now, Func<CancellationToken, ValueTask<T>> calculateValueAsync, TimeSpan duration, CancellationToken cancellationToken)
             {
                 var currentValuePromise = this._valuePromise;
                 if (currentValuePromise is null || _expiration <= now)
                 {
-                    bool shouldCalculateValue;
-                    lock (this)
-                    {
-                        currentValuePromise = this._valuePromise;
-                        if (currentValuePromise is null || _expiration <= now)
-                        {
-                            shouldCalculateValue = true;
-                            currentValuePromise = new TaskCompletionSource<object?>();
-                            _valuePromise = currentValuePromise;
-                            _expiration = duration != TimeSpan.MaxValue
-                                ? now.Add(duration)
-                                : DateTime.MaxValue;
-                        }
-                        else
-                        {
-                            shouldCalculateValue = false;
-                        }
-                    }
-
+                    bool shouldCalculateValue = GetSetLocked(now, duration, out currentValuePromise);
                     if (shouldCalculateValue)
                     {
                         try
                         {
-                            var value = await calculateValue(cancellationToken);
+                            var value = await calculateValueAsync(cancellationToken);
                             currentValuePromise.SetResult(value);
                             return value;
                         }
@@ -92,6 +95,38 @@ namespace IntelligentHack.IntelligentCache
                 }
             }
 
+            public T GetSet<T>(DateTime now, Func<T> calculateValue, TimeSpan duration)
+            {
+                var currentValuePromise = this._valuePromise;
+                if (currentValuePromise is null || _expiration <= now)
+                {
+                    bool shouldCalculateValue = GetSetLocked(now, duration, out currentValuePromise);
+                    if (shouldCalculateValue)
+                    {
+                        try
+                        {
+                            var value = calculateValue();
+                            currentValuePromise.SetResult(value);
+                            return value;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Propagate the exception to the other threads that are waiting for this result.
+                            lock (this)
+                            {
+                                _valuePromise = null;
+                            }
+                            currentValuePromise.SetException(ex);
+                            throw;
+                        }
+                    }
+                }
+
+                // Someone else is calculating the value (or has already done so), just wait for it.
+                // If we reach this point, currentValuePromise is not null.
+                return (T)currentValuePromise.GetResult()!;
+            }
+
             public bool Invalidate()
             {
                 lock (this)
@@ -108,24 +143,80 @@ namespace IntelligentHack.IntelligentCache
             }
         }
 
-        public event Action<string>? KeyInvalidated;
-
-        public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             var entry = _entries.GetOrAdd(key, _ => new CacheEntry());
-            return entry.GetSet(this.Clock.UtcNow, calculateValue, duration, cancellationToken);
+            return entry.GetSetAsync(this.Clock.UtcNow, calculateValue, duration, cancellationToken);
         }
 
-        public ValueTask Invalidate(string key)
+        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration)
+        {
+            var entry = _entries.GetOrAdd(key, _ => new CacheEntry());
+            return entry.GetSet(this.Clock.UtcNow, calculateValue, duration);
+        }
+
+        public ValueTask InvalidateAsync(string key, bool wasTriggeredLocally = true, CancellationToken cancellationToken = default)
+        {
+            Invalidate(key, wasTriggeredLocally);
+            return default;
+        }
+
+        public void Invalidate(string key, bool wasTriggeredLocally = true)
         {
             if (_entries.TryGetValue(key, out var entry))
             {
-                if (entry.Invalidate())
+                entry.Invalidate();
+            }
+        }
+    }
+
+    internal class JoinableTaskCompletionSource<T>
+    {
+        private readonly object _resultAvailableMonitor = new object();
+        private readonly TaskCompletionSource<T> _taskCompletionSource = new TaskCompletionSource<T>();
+
+        public void SetResult(T value)
+        {
+            lock (_resultAvailableMonitor)
+            {
+                _taskCompletionSource.SetResult(value);
+                Monitor.PulseAll(_resultAvailableMonitor);
+            }
+        }
+
+        public void SetException(Exception ex)
+        {
+            lock (_resultAvailableMonitor)
+            {
+                _taskCompletionSource.SetException(ex);
+                Monitor.PulseAll(_resultAvailableMonitor);
+            }
+        }
+
+        public Task<T> Task => _taskCompletionSource.Task;
+
+        public T GetResult()
+        {
+            var task = _taskCompletionSource.Task;
+            if (!task.IsCompleted)
+            {
+                lock (_resultAvailableMonitor)
                 {
-                    KeyInvalidated?.Invoke(key);
+                    if (!task.IsCompleted)
+                    {
+                        Monitor.Wait(_resultAvailableMonitor);
+                    }
                 }
             }
-            return default;
+
+            if (task.IsFaulted)
+            {
+                throw task.Exception.InnerException;
+            }
+            else
+            {
+                return task.Result;
+            }
         }
     }
 }
