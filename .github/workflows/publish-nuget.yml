@@ -41,12 +41,10 @@ jobs:
       run: del Env:\GITHUB_ACTIONS ; dotnet test --configuration Release --no-restore
 
     - name: Pack
-      run: del Env:\GITHUB_ACTIONS ; dotnet pack ./DistributedCache/DistributedCache.csproj --configuration Release --no-restore
+      run: del Env:\GITHUB_ACTIONS ; dotnet pack ./IntelligentCache/IntelligentCache.csproj --configuration Release --no-restore
 
-
-
-    # - name: Push the generated package to NuGet.org registry
-    #   run: |
-    #     $version = dir DistributedCache/bin/Release/*.nupkg | % { $m = $_.Name -match "IntelligentHack\.DistributedCache\.(.*)\.nupkg"; $Matches[1] }
-    #     dotnet nuget push ./DistributedCache/bin/Release/IntelligentHack.DistributedCache.$version.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
-    #     dotnet nuget delete IntelligentHack.DistributedCache $version --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
+    - name: Push the generated package to NuGet.org registry
+      run: |
+        $version = dir IntelligentCache/bin/Release/*.nupkg | % { $m = $_.Name -match "IntelligentHack\.IntelligentCache\.(.*)\.nupkg"; $Matches[1] }
+        dotnet nuget push ./IntelligentCache/bin/Release/IntelligentHack.IntelligentCache.$version.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
+        dotnet nuget delete IntelligentHack.IntelligentCache $version --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IntelligentHack.DistributedCache
+namespace IntelligentHack.IntelligentCache
 {
     /// <summary>
     /// An implementation of <see cref="ICache" /> based on Redis.

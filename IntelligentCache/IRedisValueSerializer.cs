@@ -1,7 +1,7 @@
 using StackExchange.Redis;
 using System.Diagnostics.CodeAnalysis;
 
-namespace IntelligentHack.DistributedCache
+namespace IntelligentHack.IntelligentCache
 {
     public interface IRedisValueSerializer
     {

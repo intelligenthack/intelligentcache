@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace IntelligentHack.DistributedCache
+namespace IntelligentHack.IntelligentCache
 {
     public static class ServiceCollectionExtensions
     {
@@ -13,7 +13,7 @@ namespace IntelligentHack.DistributedCache
         /// <param name="exceptionLogger">A callback to log exceptions found in background tasks.</param>
         /// <param name="valueSerializer">An <see cref="IRedisValueSerializer"/> used to convert values from and to string.</param>
         /// <param name="redisKeyPrefix">A prefix that is appended to the keys on redis, to avoid naming collisions.</param>
-        public static IServiceCollection AddRedisDistributedCache(this IServiceCollection services, string redisConnectionString, Action<Exception> exceptionLogger, IRedisValueSerializer? valueSerializer = null, string redisKeyPrefix = "cache:")
+        public static IServiceCollection AddRedisIntelligentCache(this IServiceCollection services, string redisConnectionString, Action<Exception> exceptionLogger, IRedisValueSerializer? valueSerializer = null, string redisKeyPrefix = "cache:")
         {
             return services
                 .AddSingleton(sp => new RedisCache(redisConnectionString, redisKeyPrefix, valueSerializer ?? DefaultRedisValueSerializer.Instance, exceptionLogger))

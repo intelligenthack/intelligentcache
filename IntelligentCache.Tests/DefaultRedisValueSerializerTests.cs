@@ -1,10 +1,10 @@
-using IntelligentHack.DistributedCache;
+using IntelligentHack.IntelligentCache;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace DistributedCache.Tests
+namespace IntelligentCache.Tests
 {
     public class DefaultRedisValueSerializerTests
     {

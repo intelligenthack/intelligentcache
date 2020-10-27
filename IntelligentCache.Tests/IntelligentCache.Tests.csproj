@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\DistributedCache\DistributedCache.csproj" />
+        <ProjectReference Include="..\IntelligentCache\IntelligentCache.csproj" />
     </ItemGroup>
 
 </Project>

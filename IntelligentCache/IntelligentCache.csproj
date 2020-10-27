@@ -4,14 +4,14 @@
         <TargetFrameworks>netstandard2.1;netstandard2.0;net461</TargetFrameworks>
         <Nullable>enable</Nullable>
         <LangVersion>8.0</LangVersion>
-        <RootNamespace>IntelligentHack.DistributedCache</RootNamespace>
-        <AssemblyName>IntelligentHack.DistributedCache</AssemblyName>
+        <RootNamespace>IntelligentHack.IntelligentCache</RootNamespace>
+        <AssemblyName>IntelligentHack.IntelligentCache</AssemblyName>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <Version>1.0.0</Version>
-        <PackageId>IntelligentHack.DistributedCache</PackageId>
+        <PackageId>IntelligentHack.IntelligentCache</PackageId>
         <Authors>Intelligent Hack srls</Authors>
-        <PackageProjectUrl>https://github.com/intelligenthack/distributed-cache</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/intelligenthack/distributed-cache.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/intelligenthack/intelligent-cache</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/intelligenthack/intelligent-cache.git</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>This package implements a distributed cache backed by Redis.
 

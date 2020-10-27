@@ -1,9 +1,9 @@
 using AutoFixture;
 using StackExchange.Redis;
 using Xunit;
-using static IntelligentHack.DistributedCache.RedisCache;
+using static IntelligentHack.IntelligentCache.RedisCache;
 
-namespace DistributedCache.Tests
+namespace IntelligentCache.Tests
 {
     public class InvalidationMessageTests
     {

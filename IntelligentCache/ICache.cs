@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IntelligentHack.DistributedCache
+namespace IntelligentHack.IntelligentCache
 {
     public interface ICache
     {
