@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace IntelligentHack.DistributedCache
+namespace IntelligentHack.IntelligentCache
 {
     public interface IClock
     {

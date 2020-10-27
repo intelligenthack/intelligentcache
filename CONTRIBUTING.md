@@ -1,4 +1,4 @@
-# Contributing to IntelligentHack.DistributedCache
+# Contributing to IntelligentHack.IntelligentCache
 
 **Welcome!**  
 Thanks for your interest in contributing to this project. Any contribution will

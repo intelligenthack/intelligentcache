@@ -1,6 +1,6 @@
-![distributed cache](https://github.com/intelligenthack/distributed-cache/blob/master/doc/logo_distributed-cache_color-whitebg_544x240.png?raw=true)
+![intelligent cache](doc/logo.png?raw=true)
 
-# Distributed Cache
+# Intelligent Cache
 
 This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.
 
@@ -31,7 +31,7 @@ That's all you need. All operations are already correctly wired to implement the
 
 ## Using with Asp.Net-Core
 
-Register the required services by calling the `AddRedisDistributedCache` method. This method has the following parameters:
+Register the required services by calling the `AddRedisIntelligentCache` method. This method has the following parameters:
 
 | Name | Description
 |-|-|
@@ -45,7 +45,7 @@ The following example shows a minimal configuration:
 ```c#
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddRedisDistributedCache(
+    services.AddRedisIntelligentCache(
         "localhost:6379",
         ex => Console.Error.WriteLine(ex)
     );
@@ -152,7 +152,7 @@ Once a value is cached, it should not be modified, since other instances of the 
 
 In order to be able to store values on Redis, they need to be serialized. By default, values are serialized using [Json.NET](https://www.newtonsoft.com/json). Therefore you must make sure that all the values that are stored into the cache can be serialized in that way.
 
-It is possible to customize the serialization by passing an implementation of `IRedisValueSerializer` to the `AddRedisDistributedCache` method.
+It is possible to customize the serialization by passing an implementation of `IRedisValueSerializer` to the `AddRedisIntelligentCache` method.
 
 Since values can be stored in Redis for a long period of time, it is important to be careful when changing type of the values that are cached. Any property that is added, modified or renamed may cause incomplete data to be retrieved. For example, consider the following code that retrieves content from a database and uses the cache to avoid hitting the database on every request:
 
