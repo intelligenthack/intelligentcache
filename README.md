@@ -23,11 +23,34 @@ For example, to implement a multilayer cache with a local layer and a Redis laye
 
 ```
 var memoryCache = new MemoryCache();
-var redisCache = new RedisCache(/* params */);
+var redisCache = new RedisCache(/* connection string */);
+redisCache.StartAsync(/* cancelation token */);
 var cache = new CompositeCache(memoryCache, redisCache);
 ```
 
+Note that `RedisCache` class implements `IHostedService`, since it needs to start a background task. That is why `StartAsync` should be called after instantiating the cache. Another way of doing so is using `AddHostedService` as shown in the following section. 
+
 That's all you need. All operations are already correctly wired to implement the two layer. Clearly you can add more layers and types as you need.
+
+Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
+```
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddRedisIntelligentCache(new RedisCache("localhost:6379"));
+}
+```
+Even customize `RedisCache`:
+```
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddRedisIntelligentCache(new RedisCache("localhost:6379")
+    {
+        ExceptionLogger = ex => Console.WriteLine(ex),
+        KeyPrefix = ":mychache",
+        ValueSerializer = new MyRedisValueSerializerImplementacion()
+    });
+}
+```
 
 ## Usage
 
@@ -92,28 +115,52 @@ The `Invalidate` method takes the following parameters:
 |-|-|
 | `key` | The key that was used previously to lookup the value. |
 
-# Using with Asp.Net-Core
+## Using with Asp.Net-Core
 
-Register the required services by calling the `AddRedisIntelligentCache` method. This method has the following parameters:
+Register the cache as a services in your service collection by using the following code:
 
-| Name | Description
-|-|-|
-| `redisConnectionString` | The connection string to the Redis server, in the [format described here](https://stackexchange.github.io/StackExchange.Redis/Configuration.html). |
-| `exceptionLogger` | A callback that is called when an exception needs to be logged. We recommend using [StackExchange.Exceptional](https://github.com/NickCraver/StackExchange.Exceptional), but you are free to use whatever you want. |
-| `valueSerializer` | An optional parameter to customize the serialization of values to a Redis-compatible format. |
-| `redisKeyPrefix` | A prefix that is appended to all keys that are stored on Redis. Defaults to "`cache:`". |
+```
+ services
+    .AddSingleton(sp => new RedisCache(redisConnectionString))
+    .AddHostedService(sp => sp.GetRequiredService<RedisCache>())
+    .AddSingleton<ICache>(sp => new CompositeCache(
+        level1: new MemoryCache(),
+        level2: sp.GetRequiredService<RedisCache>()
+    ));
+```
 
-The following example shows a minimal configuration:
-
-```c#
+Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
+```
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddRedisIntelligentCache(
-        "localhost:6379",
-        ex => Console.Error.WriteLine(ex)
-    );
+    services.AddRedisIntelligentCache(new RedisCache("localhost:6379"));
 }
 ```
+Even customize `RedisCache`:
+```
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddRedisIntelligentCache(new RedisCache("localhost:6379")
+    {
+        ExceptionLogger = ex => Console.WriteLine(ex),
+        KeyPrefix = ":mychache",
+        ValueSerializer = new MyRedisValueSerializerImplementacion()
+    });
+}
+```
+
+### Customizing Redis cache
+
+It is possible to customize the serialization, exception logs and key prefix appended to all keys that are stored on Redis.
+
+#### Custom serialization
+Serialization can be customized by setting an implementation of `IRedisValueSerializer` to the `ValueSerializer` property on `RedisCache` class.
+
+#### Custom exception logs
+Exception logs can be changed by providing a new action for `ExceptionLogger` property. By default all exception will be logged in the `Console`.  
+
+#### Custom key prefix
+A new key prefix of your choice can be applied by assigning it to `KeyPrefix` property .  
 
 # Architecture
 
@@ -152,7 +199,7 @@ Once a value is cached, it should not be modified, since other instances of the 
 
 In order to be able to store values on Redis, they need to be serialized. By default, values are serialized using [Json.NET](https://www.newtonsoft.com/json). Therefore you must make sure that all the values that are stored into the cache can be serialized in that way.
 
-It is possible to customize the serialization by passing an implementation of `IRedisValueSerializer` to the `AddRedisIntelligentCache` method.
+As mentioned before, it is possible to customize the serialization by setting an implementation of `IRedisValueSerializer` to the `ValueSerializer` property on `RedisCache` class.
 
 Since values can be stored in Redis for a long period of time, it is important to be careful when changing type of the values that are cached. Any property that is added, modified or renamed may cause incomplete data to be retrieved. For example, consider the following code that retrieves content from a database and uses the cache to avoid hitting the database on every request:
 

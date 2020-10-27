@@ -1,5 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using System;
+using System.IO;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 
 namespace IntelligentHack.IntelligentCache
 {
@@ -10,16 +14,15 @@ namespace IntelligentHack.IntelligentCache
         /// </summary>
         /// <param name="services"></param>
         /// <param name="redisConnectionString">The redis connection string.</param>
-        /// <param name="exceptionLogger">A callback to log exceptions found in background tasks.</param>
-        /// <param name="valueSerializer">An <see cref="IRedisValueSerializer"/> used to convert values from and to string.</param>
-        /// <param name="redisKeyPrefix">A prefix that is appended to the keys on redis, to avoid naming collisions.</param>
-        public static IServiceCollection AddRedisIntelligentCache(this IServiceCollection services, string redisConnectionString, Action<Exception> exceptionLogger, IRedisValueSerializer? valueSerializer = null, string redisKeyPrefix = "cache:")
-        {
+        public static IServiceCollection AddRedisIntelligentCache(
+            this IServiceCollection services,
+            RedisCache redisImplementation)
+        { 
             return services
-                .AddSingleton(sp => new RedisCache(redisConnectionString, redisKeyPrefix, valueSerializer ?? DefaultRedisValueSerializer.Instance, exceptionLogger))
+                .AddSingleton(sp => redisImplementation)
                 .AddHostedService(sp => sp.GetRequiredService<RedisCache>())
                 .AddSingleton<ICache>(sp => new CompositeCache(
-                    level1: new MemoryCache(WallClock.Instance),
+                    level1: new MemoryCache(),
                     level2: sp.GetRequiredService<RedisCache>()
                 ));
         }
