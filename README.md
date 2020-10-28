@@ -29,29 +29,6 @@ var cache = new CompositeCache(memoryCache, redisCache);
 
 That's all you need. All operations are already correctly wired to implement the two layer. Clearly you can add more layers and types as you need.
 
-## Using with Asp.Net-Core
-
-Register the required services by calling the `AddRedisIntelligentCache` method. This method has the following parameters:
-
-| Name | Description
-|-|-|
-| `redisConnectionString` | The connection string to the Redis server, in the [format described here](https://stackexchange.github.io/StackExchange.Redis/Configuration.html). |
-| `exceptionLogger` | A callback that is called when an exception needs to be logged. We recommend using [StackExchange.Exceptional](https://github.com/NickCraver/StackExchange.Exceptional), but you are free to use whatever you want. |
-| `valueSerializer` | An optional parameter to customize the serialization of values to a Redis-compatible format. |
-| `redisKeyPrefix` | A prefix that is appended to all keys that are stored on Redis. Defaults to "`cache:`". |
-
-The following example shows a minimal configuration:
-
-```c#
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddRedisIntelligentCache(
-        "localhost:6379",
-        ex => Console.Error.WriteLine(ex)
-    );
-}
-```
-
 ## Usage
 
 ### Reading a value from the cache
@@ -114,6 +91,29 @@ The `Invalidate` method takes the following parameters:
 | Name | Description
 |-|-|
 | `key` | The key that was used previously to lookup the value. |
+
+# Using with Asp.Net-Core
+
+Register the required services by calling the `AddRedisIntelligentCache` method. This method has the following parameters:
+
+| Name | Description
+|-|-|
+| `redisConnectionString` | The connection string to the Redis server, in the [format described here](https://stackexchange.github.io/StackExchange.Redis/Configuration.html). |
+| `exceptionLogger` | A callback that is called when an exception needs to be logged. We recommend using [StackExchange.Exceptional](https://github.com/NickCraver/StackExchange.Exceptional), but you are free to use whatever you want. |
+| `valueSerializer` | An optional parameter to customize the serialization of values to a Redis-compatible format. |
+| `redisKeyPrefix` | A prefix that is appended to all keys that are stored on Redis. Defaults to "`cache:`". |
+
+The following example shows a minimal configuration:
+
+```c#
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddRedisIntelligentCache(
+        "localhost:6379",
+        ex => Console.Error.WriteLine(ex)
+    );
+}
+```
 
 # Architecture
 
