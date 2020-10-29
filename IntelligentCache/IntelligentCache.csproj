@@ -29,6 +29,7 @@ The cache has two levels. The first one is in memory and the second one is Redis
         <CopyrightEndYear>$([System.DateTime]::Now.Year)</CopyrightEndYear>
         <Copyright Condition="$(CopyrightStartYear) == $(CopyrightEndYear)">Copyright $(CopyrightStartYear) $(Company)</Copyright>
         <Copyright Condition="$(CopyrightStartYear) != $(CopyrightEndYear)">Copyright $(CopyrightStartYear)-$(CopyrightEndYear) $(Company)</Copyright>
+        <PackageIcon>icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -49,6 +50,13 @@ The cache has two levels. The first one is in memory and the second one is Redis
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="StackExchange.Redis" Version="2.0.495" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="..\doc\icon.png">
+        <Pack>True</Pack>
+        <PackagePath></PackagePath>
+      </None>
     </ItemGroup>
 
 </Project>
