@@ -15,17 +15,18 @@ namespace IntelligentHack.IntelligentCache
     {
         private volatile IConnectionMultiplexer? _redis;
         private readonly string _redisConnectionString;
-        private readonly string _keyPrefix;
-        private readonly IRedisValueSerializer _valueSerializer;
-        private readonly Action<Exception> _exceptionLogger;
         private readonly Guid _clientId = Guid.NewGuid();
 
-        public RedisCache(string redisConnectionString, string keyPrefix, IRedisValueSerializer valueSerializer, Action<Exception> exceptionLogger)
+        public string KeyPrefix { get; set; }
+        public IRedisValueSerializer ValueSerializer { get; set; }
+        public Action<Exception> ExceptionLogger { get; set; }
+
+        public RedisCache(string redisConnectionString)
         {
             _redisConnectionString = redisConnectionString;
-            _keyPrefix = keyPrefix;
-            _valueSerializer = valueSerializer;
-            _exceptionLogger = exceptionLogger;
+            KeyPrefix = ":cache";
+            ValueSerializer = DefaultRedisValueSerializer.Instance;
+            ExceptionLogger = ex => Console.Error.WriteLine(ex);
         }
 
         private bool TryGetDatabase([NotNullWhen(true)] out IDatabase? database)
@@ -62,16 +63,16 @@ namespace IntelligentHack.IntelligentCache
             {
                 try
                 {
-                    var prefixedKey = _keyPrefix + key;
+                    var prefixedKey = KeyPrefix + key;
                     var hit = await database.StringGetAsync(prefixedKey);
-                    if (hit.HasValue && _valueSerializer.TryDeserialize<T>(hit, out var cachedValue))
+                    if (hit.HasValue && ValueSerializer.TryDeserialize<T>(hit, out var cachedValue))
                     {
                         return cachedValue;
                     }
                     else
                     {
                         var freshValue = await calculateValue(cancellationToken);
-                        var serializedValue = _valueSerializer.Serialize(freshValue);
+                        var serializedValue = ValueSerializer.Serialize(freshValue);
                         var expiry = duration != TimeSpan.MaxValue ? duration : default(TimeSpan?);
                         await database.StringSetAsync(prefixedKey, serializedValue, expiry);
                         await BroadcastInvalidatedKey(key);
@@ -95,7 +96,7 @@ namespace IntelligentHack.IntelligentCache
             {
                 try
                 {
-                    var prefixedKey = _keyPrefix + key;
+                    var prefixedKey = KeyPrefix + key;
                     if (await database.KeyDeleteAsync(prefixedKey))
                     {
                         await BroadcastInvalidatedKey(key);
@@ -198,7 +199,7 @@ namespace IntelligentHack.IntelligentCache
                 }
                 catch (Exception ex)
                 {
-                    _exceptionLogger(ex);
+                    ExceptionLogger(ex);
                 }
             }
 
@@ -209,7 +210,7 @@ namespace IntelligentHack.IntelligentCache
         private Task? _subscriptionProcessor;
         private Task? _initialConnection;
 
-        Task IHostedService.StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             if (_initialConnection is object)
             {
@@ -225,7 +226,7 @@ namespace IntelligentHack.IntelligentCache
                 _redis.ConnectionFailed += (_, e) =>
                 {
                     var exception = e.Exception ?? new RedisConnectionException(e.FailureType, "Connection to redis failed");
-                    _exceptionLogger(exception);
+                    ExceptionLogger(exception);
                 };
 
                 _subscriptionProcessor = Task.Run(() => ProcessInvalidationSubscription(_redis.GetSubscriber(), _subscriptionCancellation.Token));
@@ -234,7 +235,7 @@ namespace IntelligentHack.IntelligentCache
             return Task.CompletedTask;
         }
 
-        async Task IHostedService.StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             _subscriptionCancellation.Cancel();
             if (_initialConnection is object)
@@ -252,5 +253,7 @@ namespace IntelligentHack.IntelligentCache
                 await _subscriptionProcessor;
             }
         }
+
+
     }
 }

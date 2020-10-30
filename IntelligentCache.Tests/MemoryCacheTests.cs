@@ -15,8 +15,7 @@ namespace IntelligentCache.Tests
         public async Task Item_is_calculated_when_the_cache_is_empty()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -33,8 +32,7 @@ namespace IntelligentCache.Tests
         public async Task Item_is_reused_when_the_cache_contains_it()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -54,7 +52,10 @@ namespace IntelligentCache.Tests
         {
             // Arrange
             var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache
+            {
+                Clock = clock
+            };
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -75,8 +76,7 @@ namespace IntelligentCache.Tests
         public async Task Item_is_recalculated_after_it_is_invalidated()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -96,8 +96,7 @@ namespace IntelligentCache.Tests
         public async Task Concurrent_requests_reuse_the_same_item_calculation()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -128,8 +127,7 @@ namespace IntelligentCache.Tests
         public async Task Invalidation_overrides_pending_calculation()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -162,8 +160,7 @@ namespace IntelligentCache.Tests
         public async Task Exceptions_are_not_cached()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -200,8 +197,7 @@ namespace IntelligentCache.Tests
         public async Task Timeouts_work_like_exceptions()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
             var counter = 0;
@@ -226,8 +222,7 @@ namespace IntelligentCache.Tests
         public async Task Cancellation_is_honoured_when_calculating_the_value()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
 
@@ -248,8 +243,7 @@ namespace IntelligentCache.Tests
         public async Task Cancellation_of_the_calculation_is_honoured_when_waiting_for_another_threads_calculation()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
 
@@ -273,8 +267,7 @@ namespace IntelligentCache.Tests
         public async Task Cancellation_is_honoured_when_waiting_for_another_threads_calculation_is_cancelled()
         {
             // Arrange
-            var clock = new TestClock();
-            var sut = new MemoryCache(clock);
+            var sut = new MemoryCache();
 
             var key = _fixture.Create<string>();
 

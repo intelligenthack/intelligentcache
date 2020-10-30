@@ -15,16 +15,13 @@ namespace IntelligentHack.IntelligentCache
     public sealed class MemoryCache : ICache
     {
         private readonly ConcurrentDictionary<string, CacheEntry> _entries = new ConcurrentDictionary<string, CacheEntry>();
-        private readonly IClock _clock;
-
-        public MemoryCache() : this(WallClock.Instance)
+        
+        public MemoryCache()
         {
+            this.Clock = WallClock.Instance;
         }
 
-        public MemoryCache(IClock clock)
-        {
-            _clock = clock;
-        }
+        public IClock Clock { get; set; }
 
         private sealed class CacheEntry
         {
@@ -116,7 +113,7 @@ namespace IntelligentHack.IntelligentCache
         public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
         {
             var entry = _entries.GetOrAdd(key, _ => new CacheEntry());
-            return entry.GetSet(_clock.UtcNow, calculateValue, duration, cancellationToken);
+            return entry.GetSet(this.Clock.UtcNow, calculateValue, duration, cancellationToken);
         }
 
         public ValueTask Invalidate(string key)
