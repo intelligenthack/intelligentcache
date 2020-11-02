@@ -51,18 +51,15 @@ namespace IntelligentCache.Tests
         public async Task Item_is_recalculated_after_it_expires()
         {
             // Arrange
-            var clock = new TestClock();
             var sut = new MemoryCache
             {
-                Clock = clock
             };
 
             var key = _fixture.Create<string>();
             var counter = 0;
-            var expiration = TimeSpan.FromSeconds(_fixture.Create<uint>());
+            var expiration = TimeSpan.Zero;
 
             var initialValue = await sut.GetSet(key, () => counter++, expiration);
-            clock.AdvanceBy(expiration);
 
             // Act
             var recalculatedValue = await sut.GetSet(key, () => counter++);
@@ -234,7 +231,7 @@ namespace IntelligentCache.Tests
             await calculation.WaitForEvaluation();
 
             cancellation.Cancel();
-            
+
             // Assert
             await Assert.ThrowsAsync<TaskCanceledException>(() => cancelled.AsTask());
         }
@@ -343,17 +340,5 @@ namespace IntelligentCache.Tests
             public static implicit operator Func<CancellationToken, ValueTask<int>>(LongRunningCalculation value) => value.Calculate;
         }
 
-        public sealed class TestClock : IClock
-        {
-            public DateTime UtcNow { get; private set; } = new DateTime(2020, 7, 1, 12, 0, 0, DateTimeKind.Utc);
-
-            public TestClock AdvanceBy(TimeSpan offset)
-            {
-                UtcNow += offset;
-                return this;
-            }
-
-            public TestClock AdvanceBySeconds(int seconds) => AdvanceBy(TimeSpan.FromSeconds(seconds));
-        }
     }
 }
