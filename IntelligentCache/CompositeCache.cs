@@ -16,38 +16,31 @@ namespace IntelligentHack.IntelligentCache
 
         public CompositeCache(ICache level1, ICache level2)
         {
-            _level1 = level1;
-            _level2 = level2;
+            _level1 = level1 ?? throw new ArgumentNullException(nameof(level1));
+            _level2 = level2 ?? throw new ArgumentNullException(nameof(level2));
 
-            // Propagate invalidations on the second level to the first level.
-            _level2.KeyInvalidated += key => _level1.Invalidate(key);
         }
 
-        public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration)
         {
-            return _level1.GetSet(key,
-                ct => _level2.GetSet(key, calculateValue, duration, ct),
-                duration,
-                cancellationToken
-            );
+            return _level1.GetSet(key, () => _level2.GetSet(key, calculateValue, duration), duration);
         }
 
-        public async ValueTask Invalidate(string key)
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default)
         {
-            // The first level does not need to be invalidated because the KeyInvalidated event handler will do it.
-            await _level2.Invalidate(key);
+            return await _level1.GetSetAsync(key, async (c) => await _level2.GetSetAsync(key, calculateValue, duration, c), duration, cancellationToken);
         }
 
-        public event Action<string> KeyInvalidated
+        public void Invalidate(string key)
         {
-            add
-            {
-                _level1.KeyInvalidated += value;
-            }
-            remove
-            {
-                _level1.KeyInvalidated -= value;
-            }
+            _level2.Invalidate(key);
+            _level1.Invalidate(key);
+        }
+
+        public async ValueTask InvalidateAsync(string key)
+        {
+            await _level2.InvalidateAsync(key);
+            await _level1.InvalidateAsync(key);
         }
     }
 }

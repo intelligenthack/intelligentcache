@@ -12,115 +12,49 @@ namespace IntelligentHack.IntelligentCache
     /// While this implementation supports expiration, expired items are never removed from the cache.
     /// This means that if many different cache keys are used, the memory usage will keep growing.
     /// </remarks>
-    public sealed class MemoryCache : ICache
+    public class MemoryCache : ICache
     {
-        private readonly ConcurrentDictionary<string, CacheEntry> _entries = new ConcurrentDictionary<string, CacheEntry>();
-        
+        public System.Runtime.Caching.MemoryCache cache;
 
-
-        private sealed class CacheEntry
+        public MemoryCache(string prefix)
         {
-            private TaskCompletionSource<object?>? _valuePromise;
-            private DateTime _expiration;
+            cache = new System.Runtime.Caching.MemoryCache(prefix);
+        }
 
-            public async ValueTask<T> GetSet<T>(DateTime now, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+        private readonly object obj = new object();
+
+        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration)
+        {
+            var res = (T) cache.Get(key);
+            if (res == null)
+                lock (obj)
+                {
+                    res = (T) cache.Get(key);
+                    if (res == null)
+                        res = calculateValue();
+                    cache.Set(key, res, DateTimeOffset.UtcNow.Add(duration));
+                }
+            return res;
+        }
+        public void Invalidate(string key)
+        {
+            lock (obj)
             {
-                var currentValuePromise = this._valuePromise;
-                if (currentValuePromise is null || _expiration <= now)
-                {
-                    bool shouldCalculateValue;
-                    lock (this)
-                    {
-                        currentValuePromise = this._valuePromise;
-                        if (currentValuePromise is null || _expiration <= now)
-                        {
-                            shouldCalculateValue = true;
-                            currentValuePromise = new TaskCompletionSource<object?>();
-                            _valuePromise = currentValuePromise;
-                            _expiration = duration != TimeSpan.MaxValue
-                                ? now.Add(duration)
-                                : DateTime.MaxValue;
-                        }
-                        else
-                        {
-                            shouldCalculateValue = false;
-                        }
-                    }
-
-                    if (shouldCalculateValue)
-                    {
-                        try
-                        {
-                            var value = await calculateValue(cancellationToken);
-                            currentValuePromise.SetResult(value);
-                            return value;
-                        }
-                        catch (Exception ex)
-                        {
-                            // Propagate the exception to the other threads that are waiting for this result.
-                            lock (this)
-                            {
-                                _valuePromise = null;
-                            }
-                            currentValuePromise.SetException(ex);
-                            throw;
-                        }
-                    }
-                }
-
-                // Someone else is calculating the value (or has already done so), just wait for it.
-                // If we reach this point, currentValuePromise is not null.
-                if (cancellationToken.CanBeCanceled)
-                {
-                    // Honour the provided cancellation token
-                    var cancellation = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
-                    cancellationToken.Register(() => cancellation.SetCanceled());
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    await Task.WhenAny(currentValuePromise.Task, cancellation.Task);
-                    cancellationToken.ThrowIfCancellationRequested();
-                    return (T)currentValuePromise.Task.Result!;
-                }
-                else
-                {
-                    return (T)(await currentValuePromise.Task)!;
-                }
-            }
-
-            public bool Invalidate()
-            {
-                lock (this)
-                {
-                    if (_valuePromise is object)
-                    {
-                        _valuePromise = null;
-                        _expiration = DateTime.MinValue;
-                        return true;
-                    }
-                }
-
-                return false;
+                cache.Remove(key);
             }
         }
 
-        public event Action<string>? KeyInvalidated;
-
-        public ValueTask<T> GetSet<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default)
         {
-            var entry = _entries.GetOrAdd(key, _ => new CacheEntry());
-            return entry.GetSet(DateTime.UtcNow, calculateValue, duration, cancellationToken);
+            return GetSet(key, ()=>calculateValue(CancellationToken.None).GetAwaiter().GetResult(), duration);
         }
 
-        public ValueTask Invalidate(string key)
+
+        public async ValueTask InvalidateAsync(string key)
         {
-            if (_entries.TryGetValue(key, out var entry))
-            {
-                if (entry.Invalidate())
-                {
-                    KeyInvalidated?.Invoke(key);
-                }
-            }
-            return default;
+            Invalidate(key);
         }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     }
 }
