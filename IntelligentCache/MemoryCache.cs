@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using MemCache = System.Runtime.Caching.MemoryCache;
@@ -12,8 +10,8 @@ namespace IntelligentHack.IntelligentCache
     /// </summary>
     public class MemoryCache : ICache
     {
-        public string _prefix;
-        public readonly object obj = new object();
+        private readonly string _prefix;
+        private readonly object _synclock = new object();
 
         public MemoryCache(string prefix)
         {
@@ -27,7 +25,7 @@ namespace IntelligentHack.IntelligentCache
             var res = (T)MemCache.Default.Get(k);
             if (res == null)
             { 
-                lock (obj)
+                lock (_synclock)
                 {
                     res = (T)MemCache.Default.Get(k);
                     if (res == null)
@@ -37,6 +35,7 @@ namespace IntelligentHack.IntelligentCache
                     }
                 }
             }
+
             return res;
         }
         public void Invalidate(string key)
