@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace IntelligentHack.IntelligentCache
 {
 
-    public partial class RedisCache : ICache
+    public class RedisCache : ICache
     {
         private readonly IConnectionMultiplexer _redis;
         private readonly string _prefix;
