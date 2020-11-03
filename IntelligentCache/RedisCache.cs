@@ -62,7 +62,7 @@ namespace IntelligentHack.IntelligentCache
         {
             var db = _redis.GetDatabase();
             var k = _prefix + key;
-            db.StringSetAsync(k, RedisValue.Null);
+            db.StringSet(k, RedisValue.Null);
         }
 
     }
