@@ -11,7 +11,7 @@ namespace IntelligentHack.IntelligentCache
         private readonly IConnectionMultiplexer _redis;
         private readonly string _prefix;
 
-        public IStringSerializer Serializer { get; set; } = new JsonStringSerializer();
+        public IRedisSerializer Serializer { get; set; } = new JsonStringSerializer();
 
         public RedisCache(IConnectionMultiplexer redis, string prefix = "")
         {

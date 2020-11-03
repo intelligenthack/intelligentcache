@@ -1,15 +1,16 @@
 using Newtonsoft.Json;
+using StackExchange.Redis;
 
 namespace IntelligentHack.IntelligentCache
 {
-    public class JsonStringSerializer : IStringSerializer
+    public class JsonStringSerializer : IRedisSerializer
     {
-        public T Deserialize<T>(string value)
+        public T Deserialize<T>(RedisValue value)
         {
             return JsonConvert.DeserializeObject<T>(value);
         }
 
-        public string Serialize<T>(T instance)
+        public RedisValue Serialize<T>(T instance)
         {
             return JsonConvert.SerializeObject(instance);
         }
