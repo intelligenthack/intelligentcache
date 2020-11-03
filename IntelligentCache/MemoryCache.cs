@@ -10,10 +10,6 @@ namespace IntelligentHack.IntelligentCache
     /// <summary>
     /// An implementation of <see cref="ICache" /> that stores values in memory.
     /// </summary>
-    /// <remarks>
-    /// While this implementation supports expiration, expired items are never removed from the cache.
-    /// This means that if many different cache keys are used, the memory usage will keep growing.
-    /// </remarks>
     public class MemoryCache : ICache
     {
         public string _prefix;
