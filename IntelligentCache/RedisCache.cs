@@ -2,24 +2,20 @@ using StackExchange.Redis;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace IntelligentHack.IntelligentCache
 {
 
     public partial class RedisCache : ICache
     {
-
-        private IConnectionMultiplexer? _redis;
-        string _prefix;
+        private readonly IConnectionMultiplexer _redis;
+        private readonly string _prefix;
 
         public IStringSerializer Serializer { get; set; } = new JsonStringSerializer();
 
-
         public RedisCache(IConnectionMultiplexer redis, string prefix = "")
         {
-            if (redis == null) throw new ArgumentNullException(nameof(redis));
-            _redis = redis;
+            _redis = redis ?? throw new ArgumentNullException(nameof(redis));
             _prefix = prefix + ":";
         }
 
@@ -28,12 +24,14 @@ namespace IntelligentHack.IntelligentCache
             var db = _redis.GetDatabase();
             var k = _prefix + key;
             var value = await db.StringGetAsync(k);
+
             if (value.IsNull)
             {
                 var res = await calculateValue(cancellationToken);
                 await db.StringSetAsync(k, Serializer.Serialize(res), duration);
                 return res;
             }
+
             return Serializer.Deserialize<T>(value.ToString());
         }
 
@@ -49,12 +47,14 @@ namespace IntelligentHack.IntelligentCache
             var db = _redis.GetDatabase();
             var k = _prefix + key;
             var value = db.StringGet(k);
+
             if (value.IsNull)
             {
                 var res = calculateValue();
                 db.StringSet(k, Serializer.Serialize(res), duration);
                 return res;
             }
+
             return Serializer.Deserialize<T>(value.ToString());
         }
 
