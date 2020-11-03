@@ -21,12 +21,12 @@ namespace IntelligentHack.IntelligentCache
 
         }
 
-        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration)
+        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T: class
         {
             return _level1.GetSet(key, () => _level2.GetSet(key, calculateValue, duration), duration);
         }
 
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default)
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T: class
         {
             return await _level1.GetSetAsync(key, async (c) => await _level2.GetSetAsync(key, calculateValue, duration, c), duration, cancellationToken);
         }

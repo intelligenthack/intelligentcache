@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using MemCache = System.Runtime.Caching.MemoryCache;
 
 namespace IntelligentHack.IntelligentCache
 {
@@ -14,40 +16,45 @@ namespace IntelligentHack.IntelligentCache
     /// </remarks>
     public class MemoryCache : ICache
     {
-        public System.Runtime.Caching.MemoryCache cache;
+        public string _prefix;
+        public readonly object obj = new object();
 
         public MemoryCache(string prefix)
         {
-            cache = new System.Runtime.Caching.MemoryCache(prefix);
+            _prefix = prefix + ":";
         }
 
-        private readonly object obj = new object();
 
-        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration)
+        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
         {
-            var res = (T) cache.Get(key);
+            var k = _prefix + key;
+            var res = (T)MemCache.Default.Get(k);
             if (res == null)
                 lock (obj)
                 {
-                    res = (T) cache.Get(key);
+                    res = (T)MemCache.Default.Get(k);
                     if (res == null)
                         res = calculateValue();
-                    cache.Set(key, res, DateTimeOffset.UtcNow.Add(duration));
+                    MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
                 }
             return res;
         }
         public void Invalidate(string key)
         {
-            lock (obj)
+            var k = _prefix + key;
+            if (MemCache.Default.Contains(k))
             {
-                cache.Remove(key);
+                lock (obj)
+                {
+                    MemCache.Default.Remove(k);
+                }
             }
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default)
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
-            return GetSet(key, ()=>calculateValue(CancellationToken.None).GetAwaiter().GetResult(), duration);
+            return GetSet(key, () => calculateValue(CancellationToken.None).GetAwaiter().GetResult(), duration);
         }
 
 
