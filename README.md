@@ -1,4 +1,4 @@
-<img src="doc/logo.png?raw=true" width="200" height="75	">
+<img src="doc/logo.png?raw=true" width="200">
 
 # Intelligent Cache
 
@@ -7,10 +7,11 @@ This package implements a distributed cache monad ("pattern") and currently supp
 To use the pattern, you will interact with an object of type ICache, where you can use the following operations:
 
 ```
-ICache myCache = get-cache-singleton();
 
 // Get something from the cache, on cache fail the Func is called to refresh the value and stored
-var foo = myCache.GetSet("foo-cache-key", ()=>{ return foo-from-db(); }, 3660 /* seconds */);
+var foo = myCache.GetSet("foo-cache-key", ()=>{ return foo-from-db(); }, Timespan.FromHours(1) );
+
+// alternatively
 
 // Invalidate the cache, in case we've modified foo in the db so the cache is stale
 myCache.Invalidate();
@@ -23,33 +24,21 @@ For example, to implement a multilayer cache with a local layer and a Redis laye
 
 ```
 var memoryCache = new MemoryCache();
-var redisCache = new RedisCache(/* connection string */);
-redisCache.StartAsync(/* cancelation token */);
+var redisCache = new RedisCache(/* params */);
 var cache = new CompositeCache(memoryCache, redisCache);
 ```
 
-Note that `RedisCache` class implements `IHostedService`, since it needs to start a background task. That is why `StartAsync` should be called after instantiating the cache. Another way of doing so is using `AddHostedService` as shown in the following section. 
+Note that this cache does not invalidate correctly in a webfarm environment: invalidations will work on the local server and redis but not the other webfarm webservers. In order to propagate invalidation we introduced two new composable ICache objects: `RedisInvalidatorSender` and `RedisInvalidatorReceiver`.
 
-That's all you need. All operations are already correctly wired to implement the two layer. Clearly you can add more layers and types as you need.
+In order to create a local cache that invalidates when the remote cache is nuked, you can follow this composition pattern:
 
-Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
 ```
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddRedisIntelligentCache(new RedisCache("localhost:6379"));
-}
-```
-Even customize `RedisCache`:
-```
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddRedisIntelligentCache(new RedisCache("localhost:6379")
-    {
-        ExceptionLogger = ex => Console.WriteLine(ex),
-        KeyPrefix = ":mychache",
-        ValueSerializer = new MyRedisValueSerializerImplementacion()
-    });
-}
+new CompositeCache(
+    new RedisInvalidatorReceiver(new MemoryCache()),
+    new CompositeCache(
+        new RedisInvalidatorSender(),
+        new RedisCache())
+)
 ```
 
 ## Usage
