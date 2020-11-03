@@ -30,25 +30,23 @@ namespace IntelligentHack.IntelligentCache
             var k = _prefix + key;
             var res = (T)MemCache.Default.Get(k);
             if (res == null)
+            { 
                 lock (obj)
                 {
                     res = (T)MemCache.Default.Get(k);
                     if (res == null)
+                    {
                         res = calculateValue();
-                    MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
+                        MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
+                    }
                 }
+            }
             return res;
         }
         public void Invalidate(string key)
         {
             var k = _prefix + key;
-            if (MemCache.Default.Contains(k))
-            {
-                lock (obj)
-                {
-                    MemCache.Default.Remove(k);
-                }
-            }
+            MemCache.Default.Remove(k);
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
