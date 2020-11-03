@@ -1,38 +1,14 @@
-using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace IntelligentHack.IntelligentCache
 {
-    /// <summary>
-    /// An implementation of <see cref="ICache" /> based on Redis.
-    /// </summary>
 
-    public interface IStringSerializer
+    public partial class RedisCache : ICache
     {
-        string Serialize<T>(T instance);
-        T Deserialize<T>(string value);
-    }
-
-    public class RedisCache : ICache
-    {
-        public class JsonStringSerializer : IStringSerializer
-        {
-            public T Deserialize<T>(string value)
-            {
-                return JsonConvert.DeserializeObject<T>(value);
-            }
-
-            public string Serialize<T>(T instance)
-            {
-                return JsonConvert.SerializeObject(instance);
-            }
-        }
 
         private IConnectionMultiplexer? _redis;
         string _prefix;
