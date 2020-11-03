@@ -14,7 +14,7 @@ namespace IntelligentCache.Tests
 
             public InspectableCache(Action<string> onCall, bool cacheMiss = false)
             {
-                _onCall = onCall;
+                _onCall = onCall ?? throw new ArgumentNullException(nameof(onCall));
                 _cacheMiss = cacheMiss;
             }
 
