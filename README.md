@@ -1,4 +1,4 @@
-![intelligent cache](doc/logo.png?raw=true)
+<img src="doc/logo.png?raw=true" width="200" height="75	">
 
 # Intelligent Cache
 
