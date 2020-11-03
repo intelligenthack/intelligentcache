@@ -11,11 +11,13 @@ namespace IntelligentCache.Tests
         {
             private readonly Action<string> _onCall;
             private readonly bool _cacheMiss;
+            public TimeSpan CacheDuration { get; set; }
 
             public InspectableCache(Action<string> onCall, bool cacheMiss = false)
             {
                 _onCall = onCall ?? throw new ArgumentNullException(nameof(onCall));
                 _cacheMiss = cacheMiss;
+                this.CacheDuration = TimeSpan.FromHours(1);
             }
 
             public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T: class
@@ -40,6 +42,16 @@ namespace IntelligentCache.Tests
             public async ValueTask InvalidateAsync(string key)
             {
                 _onCall(key);
+            }
+
+            public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, CancellationToken cancellationToken = default) where T : class
+            {
+                return this.GetSetAsync(key,calculateValue,this.CacheDuration,cancellationToken);
+            }
+
+            public T GetSet<T>(string key, Func<T> calculateValue) where T : class
+            {
+                return this.GetSet(key, calculateValue,this.CacheDuration);
             }
         }
 

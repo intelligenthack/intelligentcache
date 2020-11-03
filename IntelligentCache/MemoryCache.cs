@@ -13,11 +13,18 @@ namespace IntelligentHack.IntelligentCache
         private readonly string _prefix;
         private readonly object _synclock = new object();
 
+        public TimeSpan CacheDuration { get; set; }
+
         public MemoryCache(string prefix)
         {
             _prefix = prefix + ":";
+            this.CacheDuration = TimeSpan.FromHours(1);
         }
 
+        public T GetSet<T>(string key, Func<T> calculateValue) where T : class
+        {
+            return this.GetSet(key, calculateValue, this.CacheDuration);
+        }
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
         {
@@ -30,7 +37,7 @@ namespace IntelligentHack.IntelligentCache
                     res = (T)MemCache.Default.Get(k);
                     if (res == null)
                     {
-                        res = calculateValue();
+                        res = calculateValue() ?? throw new ArgumentNullException(nameof(calculateValue));
                         MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
                     }
                 }
@@ -45,6 +52,10 @@ namespace IntelligentHack.IntelligentCache
         }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, CancellationToken cancellationToken = default) where T : class
+        {
+            return await this.GetSetAsync(key,calculateValue,this.CacheDuration,cancellationToken);
+        }
         public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             return GetSet(key, () => calculateValue(CancellationToken.None).GetAwaiter().GetResult(), duration);

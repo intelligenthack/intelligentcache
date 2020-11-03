@@ -1,4 +1,4 @@
-﻿using StackExchange.Redis;
+using StackExchange.Redis;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +9,7 @@ namespace IntelligentHack.IntelligentCache
     {
         private readonly ICache _inner;
         private readonly ISubscriber _subscriber;
+        public TimeSpan CacheDuration { get; set; }
 
         public RedisInvalidatorReceiver(ISubscriber subscriber, ICache inner, RedisChannel channel)
         {
@@ -16,6 +17,7 @@ namespace IntelligentHack.IntelligentCache
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
             _ = ((string)channel) ?? throw new ArgumentNullException(nameof(channel));
             _subscriber.Subscribe(channel, Pulse);
+            this.CacheDuration = TimeSpan.FromHours(1);
         }
 
         private void Pulse(RedisChannel channel, RedisValue value)
@@ -41,6 +43,16 @@ namespace IntelligentHack.IntelligentCache
         public ValueTask InvalidateAsync(string key)
         {
             return _inner.InvalidateAsync(key);
+        }
+
+        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, CancellationToken cancellationToken = default) where T : class
+        {
+            return this.GetSetAsync(key,calculateValue,this.CacheDuration,cancellationToken);
+        }
+
+        public T GetSet<T>(string key, Func<T> calculateValue) where T : class
+        {
+            return this.GetSet(key, calculateValue);
         }
     }
 }
