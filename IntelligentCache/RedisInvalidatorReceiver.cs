@@ -1,4 +1,4 @@
-﻿using StackExchange.Redis;
+using StackExchange.Redis;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,7 +28,7 @@ namespace IntelligentHack.IntelligentCache
             return _inner.GetSet(key, calculateValue, duration);
         }
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             return _inner.GetSetAsync(key, calculateValue, duration);
         }
@@ -38,7 +38,7 @@ namespace IntelligentHack.IntelligentCache
             _inner.Invalidate(key);
         }
 
-        public ValueTask InvalidateAsync(string key)
+        public Task InvalidateAsync(string key)
         {
             return _inner.InvalidateAsync(key);
         }

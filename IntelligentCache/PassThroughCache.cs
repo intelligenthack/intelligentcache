@@ -14,7 +14,7 @@ namespace IntelligentHack.IntelligentCache
             return calculateValue();
         }
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             return calculateValue(cancellationToken);
         }
@@ -24,9 +24,9 @@ namespace IntelligentHack.IntelligentCache
             return;
         }
 
-        public ValueTask InvalidateAsync(string key)
+        public Task InvalidateAsync(string key)
         {
-            return new ValueTask();
+            return Task.CompletedTask;
         }
     }
 }

@@ -18,7 +18,6 @@ namespace IntelligentHack.IntelligentCache
         {
             _level1 = level1 ?? throw new ArgumentNullException(nameof(level1));
             _level2 = level2 ?? throw new ArgumentNullException(nameof(level2));
-
         }
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
@@ -26,9 +25,9 @@ namespace IntelligentHack.IntelligentCache
             return _level1.GetSet(key, () => _level2.GetSet(key, calculateValue, duration), duration);
         }
 
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
-            return await _level1.GetSetAsync(key, ct => _level2.GetSetAsync(key, calculateValue, duration, ct), duration, cancellationToken).ConfigureAwait(false);
+            return _level1.GetSetAsync(key, ct => _level2.GetSetAsync(key, calculateValue, duration, ct), duration, cancellationToken);
         }
 
         public void Invalidate(string key)
@@ -37,7 +36,7 @@ namespace IntelligentHack.IntelligentCache
             _level1.Invalidate(key);
         }
 
-        public async ValueTask InvalidateAsync(string key)
+        public async Task InvalidateAsync(string key)
         {
             await _level2.InvalidateAsync(key).ConfigureAwait(false);
             await _level1.InvalidateAsync(key).ConfigureAwait(false);

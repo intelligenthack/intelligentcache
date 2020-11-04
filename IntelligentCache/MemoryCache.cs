@@ -43,17 +43,17 @@ namespace IntelligentHack.IntelligentCache
             MemCache.Default.Remove(k);
         }
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             var result = GetSet(key, () => calculateValue(cancellationToken).GetAwaiter().GetResult(), duration);
-            return new ValueTask<T>(result);
+            return Task.FromResult(result);
         }
 
 
-        public ValueTask InvalidateAsync(string key)
+        public Task InvalidateAsync(string key)
         {
             Invalidate(key);
-            return default;
+            return Task.CompletedTask;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace IntelligentHack.IntelligentCache
             _prefix = prefix + ":";
         }
 
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public async Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             var db = _redis.GetDatabase();
             var k = _prefix + key;
@@ -35,7 +35,7 @@ namespace IntelligentHack.IntelligentCache
             return Serializer.Deserialize<T>(value.ToString());
         }
 
-        public async ValueTask InvalidateAsync(string key)
+        public async Task InvalidateAsync(string key)
         {
             var db = _redis.GetDatabase();
             var k = _prefix + key;
@@ -64,6 +64,5 @@ namespace IntelligentHack.IntelligentCache
             var k = _prefix + key;
             db.StringSet(k, RedisValue.Null);
         }
-
     }
 }
