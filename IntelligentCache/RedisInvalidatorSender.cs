@@ -33,7 +33,7 @@ namespace IntelligentHack.IntelligentCache
 
         public async ValueTask InvalidateAsync(string key)
         {
-            await _subscriber.PublishAsync(_channel,key);
+            await _subscriber.PublishAsync(_channel,key).ConfigureAwait(false);
         }
     }
 }

@@ -23,12 +23,12 @@ namespace IntelligentHack.IntelligentCache
         {
             var db = _redis.GetDatabase();
             var k = _prefix + key;
-            var value = await db.StringGetAsync(k);
+            var value = await db.StringGetAsync(k).ConfigureAwait(false);
 
             if (value.IsNull)
             {
-                var res = await calculateValue(cancellationToken);
-                await db.StringSetAsync(k, Serializer.Serialize(res), duration);
+                var res = await calculateValue(cancellationToken).ConfigureAwait(false);
+                await db.StringSetAsync(k, Serializer.Serialize(res), duration).ConfigureAwait(false);
                 return res;
             }
 
@@ -39,7 +39,7 @@ namespace IntelligentHack.IntelligentCache
         {
             var db = _redis.GetDatabase();
             var k = _prefix + key;
-            await db.StringSetAsync(k, RedisValue.Null);
+            await db.StringSetAsync(k, RedisValue.Null).ConfigureAwait(false);
         }
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
