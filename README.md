@@ -64,9 +64,11 @@ var cachedValue = await cache.GetSet(cacheKey, async () =>
     return await sqlConnection.QueryFirstOrDefaultAsync<string>(
         "select Value from Content where Id = @contentId",
         new { contentId }
-    );
+    ) ?? "";
 }, TimeSpan.FromSeconds(10)); // Keep in cache for 10 seconds
 ```
+
+Note that `calculateValue` function must never return `null`. In that case a `NullReferenceException` will be thrown.
 
 The `GetSet` method has multiple overloads to allow different representations of the same parameters, which can be summarized as follows.
 
@@ -74,7 +76,7 @@ The `GetSet` method has multiple overloads to allow different representations of
 |-|-|
 | `key` | The key used to lookup the value. This must uniquely identify the content and, in general, should be derived from the identifier of the value. |
 | `calculateValue` | A callback that is invoked in case of a cache miss to calculate the value. |
-| `duration` / `durationInSeconds` | How long the value should be kept in the cache. If this parameter is omitted, the item never expires. |
+| `duration` / `durationInSeconds` | How long the value should be kept in the cache. If this parameter is omitted, the item never expires.|
 | `cancellationToken` | An optional `CancellationToken` to cancel the asynchronous operations. |
 
 ### Invalidating a value from the cache
