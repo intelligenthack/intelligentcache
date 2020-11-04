@@ -17,7 +17,7 @@ namespace IntelligentCache.Tests
             {
                 _onCall = onCall ?? throw new ArgumentNullException(nameof(onCall));
                 _cacheMiss = cacheMiss;
-                this.CacheDuration = TimeSpan.FromHours(1);
+                this.CacheDuration = TimeSpan.MaxValue;
             }
 
             public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T: class

@@ -18,7 +18,7 @@ namespace IntelligentHack.IntelligentCache
         public MemoryCache(string prefix)
         {
             _prefix = prefix + ":";
-            this.CacheDuration = TimeSpan.FromHours(1);
+            this.CacheDuration = TimeSpan.MaxValue;
         }
 
         public T GetSet<T>(string key, Func<T> calculateValue) where T : class

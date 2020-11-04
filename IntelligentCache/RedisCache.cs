@@ -19,7 +19,7 @@ namespace IntelligentHack.IntelligentCache
         {
             _redis = redis ?? throw new ArgumentNullException(nameof(redis));
             _prefix = prefix + ":";
-            this.CacheDuration = TimeSpan.FromHours(1);
+            this.CacheDuration = TimeSpan.MaxValue;
         }
         public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, CancellationToken cancellationToken = default) where T : class
         {

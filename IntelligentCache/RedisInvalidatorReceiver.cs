@@ -17,7 +17,7 @@ namespace IntelligentHack.IntelligentCache
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
             _ = ((string)channel) ?? throw new ArgumentNullException(nameof(channel));
             _subscriber.Subscribe(channel, Pulse);
-            this.CacheDuration = TimeSpan.FromHours(1);
+            this.CacheDuration = TimeSpan.MaxValue;
         }
 
         private void Pulse(RedisChannel channel, RedisValue value)

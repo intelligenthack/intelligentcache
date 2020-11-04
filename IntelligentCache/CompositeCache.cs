@@ -19,7 +19,7 @@ namespace IntelligentHack.IntelligentCache
         {
             _level1 = level1 ?? throw new ArgumentNullException(nameof(level1));
             _level2 = level2 ?? throw new ArgumentNullException(nameof(level2));
-            this.CacheDuration = TimeSpan.FromHours(1);
+            this.CacheDuration = TimeSpan.MaxValue;
         }
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T: class

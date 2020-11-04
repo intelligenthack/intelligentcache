@@ -23,8 +23,8 @@ The `ICache` object can be of different kinds -- we currently offer a memory cac
 For example, to implement a multilayer cache with a local layer and a Redis layer:
 
 ```
-var memoryCache = new MemoryCache();
-var redisCache = new RedisCache(/* params */);
+var memoryCache = new MemoryCache("cachePrefix");
+var redisCache = new RedisCache(ConnectionMultiplexer.Connect("redisConnectionString"),"cachePrefix");
 var cache = new CompositeCache(memoryCache, redisCache);
 ```
 
@@ -34,10 +34,10 @@ In order to create a local cache that invalidates when the remote cache is nuked
 
 ```
 new CompositeCache(
-    new RedisInvalidatorReceiver(new MemoryCache()),
+    new RedisInvalidatorReceiver(new MemoryCache("cachePrefix")),
     new CompositeCache(
         new RedisInvalidatorSender(),
-        new RedisCache())
+        new RedisCache(ConnectionMultiplexer.Connect("redisConnectionString"),"cachePrefix"))
 )
 ```
 
@@ -52,7 +52,7 @@ In most cases, caching data is as simple as wrapping the existing code by a call
 The following example shows how to get a value from the cache.
 
 ```c#
-ICache cache = ...; // Get the cache from the DI container
+ICache cache = ...; // Get the cache
 string contentId = ...;
 string cacheKey = "<some unique constructed key value, usually derived from contentId>";
 
@@ -65,7 +65,7 @@ var cachedValue = await cache.GetSet(cacheKey, async () =>
         "select Value from Content where Id = @contentId",
         new { contentId }
     );
-}, 10); // Keep in cache for 10 seconds
+}, TimeSpan.FromSeconds(10)); // Keep in cache for 10 seconds
 ```
 
 The `GetSet` method has multiple overloads to allow different representations of the same parameters, which can be summarized as follows.
@@ -82,7 +82,7 @@ The `GetSet` method has multiple overloads to allow different representations of
 When the source of cached data is modified, it may be desirable to invalidate the corresponding cache entry so that updated content is returned the next time it is requested. This is performed by calling the `Invalidate` method, as shown in the following example.
 
 ```c#
-ICache cache = ...; // Get the cache from the DI container
+ICache cache = ...; // Get the cache
 string contentId = ...;
 string newValue = ...;
 string cacheKey = "<some unique constructed key value, usually derived from contentId>";
@@ -104,52 +104,25 @@ The `Invalidate` method takes the following parameters:
 |-|-|
 | `key` | The key that was used previously to lookup the value. |
 
-## Using with Asp.Net-Core
-
-Register the cache as a services in your service collection by using the following code:
-
-```
- services
-    .AddSingleton(sp => new RedisCache(redisConnectionString))
-    .AddHostedService(sp => sp.GetRequiredService<RedisCache>())
-    .AddSingleton<ICache>(sp => new CompositeCache(
-        level1: new MemoryCache(),
-        level2: sp.GetRequiredService<RedisCache>()
-    ));
-```
-
-Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
-```
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddRedisIntelligentCache(new RedisCache("localhost:6379"));
-}
-```
-Even customize `RedisCache`:
-```
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddRedisIntelligentCache(new RedisCache("localhost:6379")
-    {
-        ExceptionLogger = ex => Console.WriteLine(ex),
-        KeyPrefix = ":mychache",
-        ValueSerializer = new MyRedisValueSerializerImplementacion()
-    });
-}
-```
-
 ### Customizing Redis cache
 
 It is possible to customize the serialization, exception logs and key prefix appended to all keys that are stored on Redis.
 
 #### Custom serialization
-Serialization can be customized by setting an implementation of `IRedisValueSerializer` to the `ValueSerializer` property on `RedisCache` class.
+Serialization can be customized by setting an implementation of `IRedisSerializer` to the `Serializer` property on `RedisCache` class.
 
-#### Custom exception logs
-Exception logs can be changed by providing a new action for `ExceptionLogger` property. By default all exception will be logged in the `Console`.  
+#### Custom Cache Duration
+Althoug the duration can be pass to the GetSet method, it can be set globally using the property `CacheDuration`. By default it is set to ``TimeSpan.MaxValue``.
 
-#### Custom key prefix
-A new key prefix of your choice can be applied by assigning it to `KeyPrefix` property .  
+```
+var memoryCache = new MemoryCache("cachePrefix");
+var redisCache = new RedisCache(ConnectionMultiplexer.Connect("redisConnectionString"),"cachePrefix");
+var cache = new CompositeCache(memoryCache, redisCache);
+cache.CacheDurarion = TimeSpan.FromSeconds(10); // Keep in cache for 10 seconds
+
+//Use
+var foo = myCache.GetSet("foo-cache-key", ()=>{ return foo-from-db(); });
+```
 
 # Architecture
 

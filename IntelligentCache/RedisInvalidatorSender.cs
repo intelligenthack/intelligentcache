@@ -15,7 +15,7 @@ namespace IntelligentHack.IntelligentCache
         {
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
             _channel = ((string)channel) ?? throw new ArgumentNullException(nameof(channel));
-            this.CacheDuration = TimeSpan.FromHours(1);
+            this.CacheDuration = TimeSpan.MaxValue;
         }
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
