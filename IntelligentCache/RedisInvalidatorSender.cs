@@ -28,12 +28,12 @@ namespace IntelligentHack.IntelligentCache
 
         public void Invalidate(string key)
         {
-            _subscriber.Publish(_channel,key);
+            _subscriber.Publish(_channel, key);
         }
 
-        public Task InvalidateAsync(string key)
+        public Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
-            return _subscriber.PublishAsync(_channel,key);
+            return _subscriber.PublishAsync(_channel, key);
         }
     }
 }

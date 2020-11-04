@@ -35,7 +35,7 @@ namespace IntelligentHack.IntelligentCache
             return Serializer.Deserialize<T>(value.ToString());
         }
 
-        public async Task InvalidateAsync(string key)
+        public async Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
             var db = _redis.GetDatabase();
             var k = _prefix + key;

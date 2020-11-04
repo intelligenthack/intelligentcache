@@ -37,7 +37,7 @@ namespace IntelligentCache.Tests
                 _onCall(key);
             }
 
-            public Task InvalidateAsync(string key)
+            public Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
             {
                 _onCall(key);
                 return Task.CompletedTask;

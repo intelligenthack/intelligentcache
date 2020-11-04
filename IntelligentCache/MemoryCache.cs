@@ -49,8 +49,7 @@ namespace IntelligentHack.IntelligentCache
             return Task.FromResult(result);
         }
 
-
-        public Task InvalidateAsync(string key)
+        public Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
             Invalidate(key);
             return Task.CompletedTask;

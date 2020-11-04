@@ -29,7 +29,7 @@ namespace IntelligentHack.IntelligentCache
         /// <summary>
         /// Invalidates the specified key asynchronously.
         /// </summary>
-        Task InvalidateAsync(string key);
+        Task InvalidateAsync(string key, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Invalidates the specified key.

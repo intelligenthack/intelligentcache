@@ -36,10 +36,10 @@ namespace IntelligentHack.IntelligentCache
             _level1.Invalidate(key);
         }
 
-        public async Task InvalidateAsync(string key)
+        public async Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
-            await _level2.InvalidateAsync(key).ConfigureAwait(false);
-            await _level1.InvalidateAsync(key).ConfigureAwait(false);
+            await _level2.InvalidateAsync(key, cancellationToken).ConfigureAwait(false);
+            await _level1.InvalidateAsync(key, cancellationToken).ConfigureAwait(false);
         }
     }
 }
