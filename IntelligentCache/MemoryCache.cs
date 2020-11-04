@@ -18,7 +18,6 @@ namespace IntelligentHack.IntelligentCache
             _prefix = prefix + ":";
         }
 
-
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
         {
             var k = _prefix + key;
@@ -44,17 +43,17 @@ namespace IntelligentHack.IntelligentCache
             MemCache.Default.Remove(k);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
-            return GetSet(key, () => calculateValue(CancellationToken.None).GetAwaiter().GetResult(), duration);
+            var result = GetSet(key, () => calculateValue(cancellationToken).GetAwaiter().GetResult(), duration);
+            return new ValueTask<T>(result);
         }
 
 
-        public async ValueTask InvalidateAsync(string key)
+        public ValueTask InvalidateAsync(string key)
         {
             Invalidate(key);
+            return default;
         }
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     }
 }
