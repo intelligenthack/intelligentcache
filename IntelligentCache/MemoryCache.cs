@@ -37,7 +37,7 @@ namespace IntelligentHack.IntelligentCache
                     res = (T)MemCache.Default.Get(k);
                     if (res == null)
                     {
-                        res = calculateValue() ?? throw new ArgumentNullException(nameof(calculateValue));
+                        res = calculateValue() ?? throw new NullReferenceException("Unable to cache a null return value from 'calculateValue' function.");
                         MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
                     }
                 }

@@ -61,7 +61,7 @@ namespace IntelligentHack.IntelligentCache
 
             if (value.IsNull)
             {
-                var res = calculateValue() ?? throw new ArgumentNullException(nameof(calculateValue));
+                var res = calculateValue() ?? throw new NullReferenceException("Unable to cache a null return value from 'calculateValue' function.");
                 db.StringSet(k, Serializer.Serialize(res), duration);
                 return res;
             }

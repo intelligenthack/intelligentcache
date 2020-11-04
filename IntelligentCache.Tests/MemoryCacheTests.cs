@@ -70,5 +70,16 @@ namespace IntelligentCache.Tests
             Assert.Equal("not 42", result);
         }
 
+        [Fact]
+        public void GetSet_throws_NullReferenceException_when_trying_to_save_null_values()
+        {
+            // Arrange
+            var sut = new MemoryCache("test5");
+            var called = false;
+
+            // Act-Assert
+            Assert.Throws<NullReferenceException>(() => sut.GetSet<string>("testKey", () => { called = true; return null; }, TimeSpan.Zero));
+            Assert.True(called);
+        }
     }
 }
