@@ -72,7 +72,7 @@ The `MemoryCache` constructor requires the following parameters:
 
 | Name | Description |
 |-|-|
-| `prefix` | This prefix is used to compose the cache key to prevent collisions with other uses of `System.Runtime.Caching.MemoryCache`. |
+| `prefix` | This prefix is used to compose the cache key to prevent collisions with other uses of `System.Runtime.Caching.MemoryCache`. A colon (`:`) character is always appended to this value. |
 
 ## RedisCache
 
@@ -83,7 +83,7 @@ The `RedisCache` constructor requires the following parameters:
 | Name | Description |
 |-|-|
 | `redis` | An `IConnectionMultiplexer` that mediates access to Redis. |
-| `prefix` | This prefix is used to compose the cache key to prevent collisions with other data stored in Redis. |
+| `prefix` | This prefix is used to compose the cache key to prevent collisions with other data stored in Redis. A colon (`:`) character is always appended to this value. |
 
 ### Custom serialization
 
@@ -170,7 +170,7 @@ Once a value is cached, it should not be modified, since other instances of the 
 
 In order to be able to store values on Redis, they need to be serialized. By default, values are serialized using [Json.NET](https://www.newtonsoft.com/json). Therefore you must make sure that all the values that are stored into the cache can be serialized in that way.
 
-As mentioned before, it is possible to customize the serialization by setting an implementation of `IRedisValueSerializer` to the `ValueSerializer` property on `RedisCache` class.
+As mentioned before, it is possible to customize the serialization by setting an implementation of `IRedisSerializer` to the `Serializer` property on `RedisCache` class.
 
 Since values can be stored in Redis for a long period of time, it is important to be careful when changing type of the values that are cached. Any property that is added, modified or renamed may cause incomplete data to be retrieved. After making such change, any content that was previously cached on Redis will be incomplete. The simplest way to solve this problem is to clear the Redis cache. The following command will delete everything with the `cache:` prefix:
 
