@@ -22,16 +22,16 @@ var cachedValue = await cache.GetSet(cacheKey, async () =>
         "select Value from Content where Id = @contentId",
         new { contentId }
     );
-}, 10); // Keep in cache for 10 seconds
+}, TimeSpan.FromSeconds(10)); // Keep in cache for 10 seconds
 ```
 
 The `GetSet` and the corresponding async methods accept the following parameters.
 
-| Name | Description |s
+| Name | Description |
 |-|-|
 | `key` | The key used to lookup the value. This must uniquely identify the content and, in general, should be derived from the identifier of the value. |
 | `calculateValue` | A callback that is invoked in case of a cache miss to calculate the value. |
-| `duration` | How long the value should be kept in the cache. If this parameter is omitted, the item never expires. |
+| `duration` | How long the value should be kept in the cache. To prevent expiration, `TimeSpan.MaxValue` should be used. |
 | `cancellationToken` | An optional `CancellationToken` to cancel the asynchronous operations, only present in `GetSetAsync`. |
 
 ## Invalidating a value from the cache
@@ -68,6 +68,10 @@ The `Invalidate` method takes the following parameters:
 
 `MemoryCache` is an in-memory implementation that uses `System.Runtime.Caching.MemoryCache` as backing store.
 
+```c#
+var cache = new MemoryCache("exampleKey");
+```
+
 The `MemoryCache` constructor requires the following parameters:
 
 | Name | Description |
@@ -77,6 +81,11 @@ The `MemoryCache` constructor requires the following parameters:
 ## RedisCache
 
 `RedisCache` is a cache that uses [Redis](https://redis.io/) as backing store.
+
+```c#
+var connectionMultiplexer = ConnectionMultiplexer.Connect("example_redis_connection_string");
+var cache = new RedisCache(connectionMultiplexer, "exampleKey");
+```
 
 The `RedisCache` constructor requires the following parameters:
 
