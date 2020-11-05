@@ -9,7 +9,7 @@ namespace IntelligentCache.Tests
     {
         private class Model
         {
-            public string Foo { get; set; }
+            public string? Foo { get; set; }
             public double Bar { get; set; }
         }
 

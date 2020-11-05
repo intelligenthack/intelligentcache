@@ -5,7 +5,7 @@ using Xunit;
 
 namespace IntelligentCache.Tests
 {
-    public partial class CompositeCacheTests
+    public class CompositeCacheTests
     {
         [Fact]
         public void GetSet_when_l1_hits_then_l2_not_called()
