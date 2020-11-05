@@ -63,7 +63,8 @@ namespace IntelligentCache.Tests
             Assert.True(l1);
             Assert.True(l2);
         }
-                [Fact]
+
+        [Fact]
         public async Task InvalidateAsync_when_called_l1_and_l2_called()
         {
             // Arrange
