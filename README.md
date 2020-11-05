@@ -52,3 +52,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 # License
 
 This code is released under the MIT license. Please refer to [LICENSE.md](LICENSE.md) for details.
+
+# More information
+
+Check [detailed usage guidelines here](doc/usage.md).

@@ -13,7 +13,7 @@ namespace IntelligentHack.IntelligentCache
 
         public IRedisSerializer Serializer { get; set; } = new JsonStringSerializer();
 
-        /// <param name="redis"></param>
+        /// <param name="redis">An IConnectionMultiplexer that mediates access to Redis.</param>
         /// <param name="prefix">A prefix that is inserted before each key to prefent collisions with other users of Redis.</param>
         public RedisCache(IConnectionMultiplexer redis, string prefix)
         {

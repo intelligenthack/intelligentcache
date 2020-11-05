@@ -5,11 +5,16 @@ using System.Threading.Tasks;
 
 namespace IntelligentHack.IntelligentCache
 {
+    /// <summary>
+    /// Publishes invalidation messages to a Redis topic when invalidated.
+    /// </summary>
     public class RedisInvalidationSender : ICache
     {
         private readonly ISubscriber _subscriber;
         private readonly RedisChannel _channel;
 
+        /// <param name="subscriber">An ISubscriber that allows publishing Redis pubsub messages.</param>
+        /// <param name="channel">The channel where to publish invalidation messages.</param>
         public RedisInvalidationSender(ISubscriber subscriber, RedisChannel channel)
         {
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));

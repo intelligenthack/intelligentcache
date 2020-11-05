@@ -125,7 +125,40 @@ This pair of classes implement cache invalidation across servers using Redis' pu
 
 `RedisInvalidationReceiver` acts as a cache decorator that subscribes to invalidation messages and invalidates its inner cache when one is received.
 
-[TODO]
+The following code shows a possible composition of these components to implement a 2-level cache with a MemoryCache as first level and a RedisCache as second level.
+
+```c#
+ISubscriber subscriber = GetRedisSubscriber();
+var invalidationChannel = "cache-invalidations";
+
+var cache = new CompositeCache(
+    new RedisInvalidationReceiver(
+        new MemoryCache(/* arguments */),
+        subscriber,
+        invalidationChannel
+    ),
+    new CompositeCache(
+        new RedisCache(/* arguments */),
+        new RedisInvalidationSender(subscriber, invalidationChannel)
+    )
+);
+```
+
+The `RedisInvalidationSender` constructor requires the following parameters:
+
+| Name | Description |
+|-|-|
+| `subscriber` | An ISubscriber that allows publishing Redis pubsub messages. |
+| `channel` | The channel where to publish invalidation messages. |
+
+The `RedisInvalidationReceiver` constructor requires the following parameters:
+
+| Name | Description |
+|-|-|
+| `inner` | The cache to invalidate. |
+| `subscriber` | An ISubscriber that allows subscribing to Redis pubsub messages. |
+| `channel` | The channel to subscribe invalidation messages from. |
+
 
 # Requirements and best practices
 

@@ -5,11 +5,18 @@ using System.Threading.Tasks;
 
 namespace IntelligentHack.IntelligentCache
 {
+    /// <summary>
+    /// Subscribes to invalidation messages on a Redis topic
+    /// and invalidates its inner cache when a message is received.
+    /// </summary>
     public class RedisInvalidationReceiver : ICache
     {
         private readonly ICache _inner;
         private readonly ISubscriber _subscriber;
 
+        /// <param name="inner">The cache to invalidate.</param>
+        /// <param name="subscriber">An ISubscriber that allows subscribing to Redis pubsub messages.</param>
+        /// <param name="channel">The channel that needs</param>
         public RedisInvalidationReceiver(ICache inner, ISubscriber subscriber, RedisChannel channel)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
