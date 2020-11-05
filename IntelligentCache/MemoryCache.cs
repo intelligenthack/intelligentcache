@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
 using MemCache = System.Runtime.Caching.MemoryCache;
@@ -30,7 +31,12 @@ namespace IntelligentHack.IntelligentCache
                     if (res == null)
                     {
                         res = calculateValue();
-                        MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
+
+                        var expiration = duration == TimeSpan.MaxValue
+                            ? DateTimeOffset.MaxValue
+                            : DateTimeOffset.UtcNow.Add(duration);
+
+                        MemCache.Default.Set(k, res, expiration);
                     }
                 }
             }

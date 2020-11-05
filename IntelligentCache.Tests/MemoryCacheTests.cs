@@ -145,5 +145,22 @@ namespace IntelligentCache.Tests
             Assert.True(called);
             Assert.Equal("not 42", result);
         }
+
+        [Fact]
+        public void GetSet_allows_infinite_expiration()
+        {
+            // This test checks for a bug that was present when using an infinite expiration.
+
+            // Arrange
+            var sut = new MemoryCache(GeneratePrefix());
+            var called = false;
+
+            // Act
+            var result = sut.GetSet("testKey", () => { called = true; return "42"; }, TimeSpan.MaxValue);
+
+            // Assert
+            Assert.Equal("42", result);
+            Assert.True(called);
+        }
     }
 }
