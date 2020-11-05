@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace IntelligentHack.IntelligentCache
 {
-    public class RedisInvalidatorReceiver : ICache
+    public class RedisInvalidationReceiver : ICache
     {
         private readonly ICache _inner;
         private readonly ISubscriber _subscriber;
 
-        public RedisInvalidatorReceiver(ISubscriber subscriber, ICache inner, RedisChannel channel)
+        public RedisInvalidationReceiver(ICache inner, ISubscriber subscriber, RedisChannel channel)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));

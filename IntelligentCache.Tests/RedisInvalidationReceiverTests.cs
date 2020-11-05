@@ -3,7 +3,7 @@ using Xunit;
 
 namespace IntelligentCache.Tests
 {
-    public class RedisInvalidatorReceiverTests
+    public class RedisInvalidationReceiverTests
     {
         [Fact]
         public void Invalidation_messages_call_Invalidate_on_inner_cache()
@@ -14,7 +14,7 @@ namespace IntelligentCache.Tests
 
             var subscriber = FakeRedis.CreateSubscriber();
 
-            var sut = new RedisInvalidatorReceiver(subscriber, innerCache, "invalidation");
+            var sut = new RedisInvalidationReceiver(innerCache, subscriber, "invalidation");
 
             // Act
             subscriber.Publish("invalidation", "testKey");

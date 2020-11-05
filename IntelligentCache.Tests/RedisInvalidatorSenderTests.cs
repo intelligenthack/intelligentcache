@@ -7,7 +7,7 @@ using Xunit;
 
 namespace IntelligentCache.Tests
 {
-    public class RedisInvalidatorSenderTests
+    public class RedisInvalidationSenderTests
     {
         [Fact]
         public void Invalidate_publishes_an_invalidation_message()
@@ -22,7 +22,7 @@ namespace IntelligentCache.Tests
                 publishedMessage = m;
             });
 
-            var sut = new RedisInvalidatorSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, "invalidation");
 
             // Act
             sut.Invalidate("testKey");
@@ -45,7 +45,7 @@ namespace IntelligentCache.Tests
                 publishedMessage = m;
             });
 
-            var sut = new RedisInvalidatorSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, "invalidation");
 
             // Act
             await sut.InvalidateAsync("testKey");
@@ -61,7 +61,7 @@ namespace IntelligentCache.Tests
         {
             // Arrange
             var subscriber = FakeRedis.CreateSubscriber();
-            var sut = new RedisInvalidatorSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, "invalidation");
 
             var count = 0;
 
@@ -78,7 +78,7 @@ namespace IntelligentCache.Tests
         {
             // Arrange
             var subscriber = FakeRedis.CreateSubscriber();
-            var sut = new RedisInvalidatorSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, "invalidation");
 
             var count = 0;
 

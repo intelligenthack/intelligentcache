@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
 using MemCache = System.Runtime.Caching.MemoryCache;
@@ -14,8 +13,14 @@ namespace IntelligentHack.IntelligentCache
         private readonly string _prefix;
         private readonly object _synclock = new object();
 
+        /// <param name="prefix">A prefix that is inserted before each key to prefent collisions with other users of the shared cache.</param>
         public MemoryCache(string prefix)
         {
+            if (prefix is null)
+            {
+                throw new ArgumentNullException(nameof(prefix));
+            }
+
             _prefix = prefix + ":";
         }
 
@@ -43,6 +48,7 @@ namespace IntelligentHack.IntelligentCache
 
             return res;
         }
+
         public void Invalidate(string key)
         {
             var k = _prefix + key;

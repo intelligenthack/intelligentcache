@@ -14,6 +14,8 @@ namespace IntelligentHack.IntelligentCache
         private readonly ICache _level1;
         private readonly ICache _level2;
 
+        /// <param name="level1">The first level of the composite cache. This level has the highest priority.</param>
+        /// <param name="level2"></param>
         public CompositeCache(ICache level1, ICache level2)
         {
             _level1 = level1 ?? throw new ArgumentNullException(nameof(level1));
