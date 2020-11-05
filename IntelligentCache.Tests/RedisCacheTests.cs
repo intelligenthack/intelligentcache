@@ -18,7 +18,7 @@ namespace IntelligentCache.Tests
             string? setValue = null;
             TimeSpan? setExpiration = default;
 
-            var multiplexer = FakeRedis.Create(onSet: (key, value, expiration) =>
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onSet: (key, value, expiration) =>
             {
                 setKey = key;
                 setValue = value;
@@ -47,7 +47,7 @@ namespace IntelligentCache.Tests
             string? setValue = null;
             TimeSpan? setExpiration = default;
 
-            var multiplexer = FakeRedis.Create(onSet: (key, value, expiration) =>
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onSet: (key, value, expiration) =>
             {
                 setKey = key;
                 setValue = value;
@@ -74,7 +74,7 @@ namespace IntelligentCache.Tests
             // Arrange
             string? lookupKey = null;
 
-            var multiplexer = FakeRedis.Create(onGet: key => { lookupKey = key; return "\"42\""; });
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onGet: key => { lookupKey = key; return "\"42\""; });
 
             var sut = new RedisCache(multiplexer, "prefix");
             var called = false;
@@ -94,7 +94,7 @@ namespace IntelligentCache.Tests
             // Arrange
             string? lookupKey = null;
 
-            var multiplexer = FakeRedis.Create(onGet: key => { lookupKey = key; return "\"42\""; });
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onGet: key => { lookupKey = key; return "\"42\""; });
 
             var sut = new RedisCache(multiplexer, "prefix");
             var called = false;
@@ -116,7 +116,7 @@ namespace IntelligentCache.Tests
             RedisValue setValue = default;
             TimeSpan? setExpiration = default;
 
-            var multiplexer = FakeRedis.Create(onSet: (key, value, expiration) =>
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onSet: (key, value, expiration) =>
             {
                 setKey = key;
                 setValue = value;
@@ -142,7 +142,7 @@ namespace IntelligentCache.Tests
             RedisValue setValue = default;
             TimeSpan? setExpiration = default;
 
-            var multiplexer = FakeRedis.Create(onSet: (key, value, expiration) =>
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onSet: (key, value, expiration) =>
             {
                 setKey = key;
                 setValue = value;

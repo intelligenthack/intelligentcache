@@ -12,11 +12,12 @@ namespace IntelligentCache.Tests
             string? invalidatedKey = null;
             var innerCache = new InspectableCache(key => { invalidatedKey = key; });
 
-            var topic = new FakeRedisTopic();
-            var sut = new RedisInvalidatorReceiver(topic.Subscriber, innerCache, "invalidation");
+            var subscriber = FakeRedis.CreateSubscriber();
+
+            var sut = new RedisInvalidatorReceiver(subscriber, innerCache, "invalidation");
 
             // Act
-            topic.Publish("invalidation", "testKey");
+            subscriber.Publish("invalidation", "testKey");
 
             // Assert
             Assert.Equal("testKey", invalidatedKey);

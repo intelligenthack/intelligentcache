@@ -4,7 +4,8 @@ using Xunit;
 
 namespace IntelligentCache.Tests
 {
-    public class PassThroughTests
+    public class PassThroughCacheTests
+
     {
         [Fact]
         public void GetSet_lambda_is_always_called()
