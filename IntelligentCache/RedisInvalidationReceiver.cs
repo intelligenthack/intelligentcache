@@ -16,7 +16,7 @@ namespace IntelligentHack.IntelligentCache
 
         /// <param name="inner">The cache to invalidate.</param>
         /// <param name="subscriber">An ISubscriber that allows subscribing to Redis pubsub messages.</param>
-        /// <param name="channel">The channel that needs</param>
+        /// <param name="channel">The channel to subscribe invalidation messages from.</param>
         public RedisInvalidationReceiver(ICache inner, ISubscriber subscriber, RedisChannel channel)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
