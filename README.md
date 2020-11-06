@@ -47,6 +47,8 @@ var cache = new CompositeCache(
 );
 ```
 
+Take in account that when a `calculateValue` function returns a `null` value nothing is cached and a `null` value is returned back to the caller.
+
 # Upgrading from a previous version
 
 This package follows [semantic versioning](https://semver.org/), which means that upgrading to a higher MINOR or PATCH version should always work. Upgrading to a higher MAJOR version will require code changes. Make sure to read the release notes before upgrading.
@@ -62,3 +64,4 @@ This code is released under the MIT license. Please refer to [LICENSE.md](LICENS
 # More information
 
 Check [detailed usage guidelines here](doc/usage.md).
+

@@ -36,6 +36,8 @@ namespace IntelligentHack.IntelligentCache
                     if (res == null)
                     {
                         res = calculateValue();
+                        if (res == null)
+                            return res;
 
                         var expiration = duration == TimeSpan.MaxValue
                             ? DateTimeOffset.MaxValue

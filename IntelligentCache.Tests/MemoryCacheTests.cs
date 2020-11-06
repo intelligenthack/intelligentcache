@@ -162,5 +162,18 @@ namespace IntelligentCache.Tests
             Assert.Equal("42", result);
             Assert.True(called);
         }
+
+        [Fact]
+        public void GetSet_returns_null_when_trying_to_save_null_values()
+        {
+            // Arrange
+            var sut = new MemoryCache("MemoryCache-InvalidOperationException ");
+            var called = false;
+            var cachedValue = sut.GetSet<string>("testKey", () => { called = true; return null; }, TimeSpan.Zero);
+
+            // Act-Assert
+            Assert.Null(cachedValue);
+            Assert.True(called);
+        }
     }
 }
