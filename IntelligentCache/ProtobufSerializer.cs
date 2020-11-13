@@ -20,7 +20,7 @@ namespace IntelligentHack.IntelligentCache
                         return Serializer.Deserialize<T>(stream);
                     }
                 case CompressionFormat.GZip:
-                    using(var stream = new GZipStream(new MemoryStream(value), CompressionMode.Decompress))
+                    using (var stream = new GZipStream(new MemoryStream(value), CompressionMode.Decompress))
                     {
                         return Serializer.Deserialize<T>(stream);
                     }
@@ -39,6 +39,7 @@ namespace IntelligentHack.IntelligentCache
                     using (var stream = new DeflateStream(memStream, CompressionLevel.Optimal))
                     {
                         Serializer.Serialize(stream, instance);
+                        stream.Flush();
                         return RedisValue.CreateFrom(memStream);
                     }
                 case CompressionFormat.GZip:
@@ -46,6 +47,7 @@ namespace IntelligentHack.IntelligentCache
                     using (var stream = new GZipStream(memStream, CompressionLevel.Optimal))
                     {
                         Serializer.Serialize(stream, instance);
+                        stream.Flush();
                         return RedisValue.CreateFrom(memStream);
                     }
                 case CompressionFormat.None:
