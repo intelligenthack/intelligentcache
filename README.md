@@ -28,7 +28,7 @@ var redisCache = new RedisCache(/* params */);
 var cache = new CompositeCache(memoryCache, redisCache);
 ```
 
-Note that this cache does not invalidate correctly in a webfarm environment: invalidations will work on the local server and redis but not the other webfarm webservers. In order to propagate invalidation we introduced two new composable ICache objects: `RedisInvalidatorSender` and `RedisInvalidatorReceiver`.
+Note that this cache does not invalidate correctly in a web farm environment: invalidations will work on the local server and Redis but not the other web farm webservers. In order to propagate invalidation, we introduced two new composable ICache objects: `RedisInvalidatorSender` and `RedisInvalidatorReceiver`.
 
 In order to create a local cache that invalidates when the remote cache is nuked, you can follow this composition pattern:
 
@@ -42,9 +42,9 @@ new CompositeCache(
 ```
 # Details
 
-- [API Documentation](doc/api-documentation.md)  
+- [API Documentation](doc/api-documentation.md)
 
-- [Using with Asp.Net-Core](doc/dotnet-core.md)  
+- [Using with Asp.Net-Core](doc/dotnet-core.md)
 
 - [Architecture](doc/architecture.md)
 

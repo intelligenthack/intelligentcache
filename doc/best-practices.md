@@ -54,7 +54,7 @@ After making this change, any content that was previously cached on Redis will b
 redis-cli --scan --pattern "cache:*" | xargs redis-cli del
 ```
 
-If clearing the cache is not desirable, there are other options. In some cases it is possible to assign a default value to the newly added property. Another option is to use a constructor to perform any needed validation. If the constructor throws an `ArgumentException`, it will be treated as a cache miss. The following code shows a possible implementation:
+If clearing the cache is not desirable, there are other options. In some cases, it is possible to assign a default value to the newly added property. Another option is to use a constructor to perform any needed validation. If the constructor throws an `ArgumentException`, it will be treated as a cache miss. The following code shows a possible implementation:
 
 ```c#
 public class Content

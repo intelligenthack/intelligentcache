@@ -12,7 +12,7 @@ Register the cache as a services in your service collection by using the followi
     ));
 ```
 
-Alternatively you can call the already provided extension method `AddRedisIntelligentCache`.
+Alternatively, you can call the already provided extension method `AddRedisIntelligentCache`.
 
 ```
 public void ConfigureServices(IServiceCollection services)
@@ -45,8 +45,8 @@ Serialization can be customized by setting an implementation of `IRedisValueSeri
 
 ### Custom exception logs
 
-Exception logs can be changed by providing a new action for `ExceptionLogger` property. By default all exception will be logged in the `Console`.
+Exception logs can be changed by providing a new action for `ExceptionLogger` property. By default, all exception will be logged in the `Console`.
 
 ### Custom key prefix
 
-A new key prefix of your choice can be applied by assigning it to `KeyPrefix` property .
+A new key prefix of your choice can be applied by assigning it to `KeyPrefix` property.
