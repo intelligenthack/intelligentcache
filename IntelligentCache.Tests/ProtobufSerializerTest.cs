@@ -49,9 +49,9 @@ namespace IntelligentCache.Tests
         {
             var model = new Model() { Bar = 15, Foo = "foo" };
             IRedisSerializer protobufSerializer = new ProtobufSerializer() { CompressionFormat = CompressionFormat.Deflate };
-            var serialized = protobufSerializer.Deserialize<Model>(protobufSerializer.Serialize(model));
-            Assert.Equal(model.Bar, serialized.Bar);
-            Assert.Equal(model.Foo, serialized.Foo);
+            var deserialized = protobufSerializer.Deserialize<Model>(protobufSerializer.Serialize(model));
+            Assert.Equal(model.Bar, deserialized.Bar);
+            Assert.Equal(model.Foo, deserialized.Foo);
         }
 
         [Fact]
@@ -59,8 +59,7 @@ namespace IntelligentCache.Tests
         {
             var model = new Model() { Bar = 15, Foo = "foo" };
             IRedisSerializer protobufSerializer = new ProtobufSerializer() { CompressionFormat = CompressionFormat.GZip };
-            var serialized = protobufSerializer.Serialize(model);
-            var deserialized = protobufSerializer.Deserialize<Model>(serialized);
+            var deserialized = protobufSerializer.Deserialize<Model>(protobufSerializer.Serialize(model));
             Assert.Equal(model.Bar, deserialized.Bar);
             Assert.Equal(model.Foo, deserialized.Foo);
         }
@@ -70,9 +69,9 @@ namespace IntelligentCache.Tests
         {
             var model = new Model() { Bar = 15, Foo = "foo" };
             IRedisSerializer protobufSerializer = new ProtobufSerializer() { CompressionFormat = CompressionFormat.None };
-            var serialized = protobufSerializer.Deserialize<Model>(protobufSerializer.Serialize(model));
-            Assert.Equal(model.Bar, serialized.Bar);
-            Assert.Equal(model.Foo, serialized.Foo);
+            var deserialized = protobufSerializer.Deserialize<Model>(protobufSerializer.Serialize(model));
+            Assert.Equal(model.Bar, deserialized.Bar);
+            Assert.Equal(model.Foo, deserialized.Foo);
         }
     }
 }
