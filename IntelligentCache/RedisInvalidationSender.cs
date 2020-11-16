@@ -14,7 +14,7 @@ namespace IntelligentHack.IntelligentCache
         private readonly RedisChannel _channel;
 
         /// <param name="subscriber">An ISubscriber that allows publishing Redis pubsub messages.</param>
-        /// <param name="channel">The channel where to publish invalidation messages.</param>
+        /// <param name="channel">The channel that invalidation messages are published to.</param>
         public RedisInvalidationSender(ISubscriber subscriber, RedisChannel channel)
         {
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));

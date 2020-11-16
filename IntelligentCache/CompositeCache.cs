@@ -14,8 +14,8 @@ namespace IntelligentHack.IntelligentCache
         private readonly ICache _level1;
         private readonly ICache _level2;
 
-        /// <param name="level1">The first level of the composite cache. This level has the highest priority.</param>
-        /// <param name="level2"></param>
+        /// <param name="level1">This is the first cache to be checked. If there is a cache miss, the second level cache will be attempted</param>
+        /// <param name="level2">Second level cache (usually a shared/remote cache in a webfarm). Called when the first level cache misses.</param>
         public CompositeCache(ICache level1, ICache level2)
         {
             _level1 = level1 ?? throw new ArgumentNullException(nameof(level1));

@@ -13,7 +13,7 @@ namespace IntelligentHack.IntelligentCache
         private readonly string _prefix;
         private readonly object _synclock = new object();
 
-        /// <param name="prefix">A prefix that is inserted before each key to prefent collisions with other users of the shared cache.</param>
+        /// <param name="prefix">A prefix that is inserted before each key to prevent collisions with other users of the shared cache.</param>
         public MemoryCache(string prefix)
         {
             if (prefix is null)
@@ -29,7 +29,7 @@ namespace IntelligentHack.IntelligentCache
             var k = _prefix + key;
             var res = (T)MemCache.Default.Get(k);
             if (res == null)
-            { 
+            {
                 lock (_synclock)
                 {
                     res = (T)MemCache.Default.Get(k);

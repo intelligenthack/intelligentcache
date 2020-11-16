@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 namespace IntelligentHack.IntelligentCache
 {
-
     public class RedisCache : ICache
     {
         private readonly IConnectionMultiplexer _redis;
@@ -14,7 +13,7 @@ namespace IntelligentHack.IntelligentCache
         public IRedisSerializer Serializer { get; set; } = new JsonStringSerializer();
 
         /// <param name="redis">An IConnectionMultiplexer that mediates access to Redis.</param>
-        /// <param name="prefix">A prefix that is inserted before each key to prefent collisions with other users of Redis.</param>
+        /// <param name="prefix">A prefix that is inserted before each key to prevent collisions with other users of Redis.</param>
         public RedisCache(IConnectionMultiplexer redis, string prefix)
         {
             _redis = redis ?? throw new ArgumentNullException(nameof(redis));
