@@ -37,28 +37,20 @@ namespace IntelligentHack.IntelligentCache
                 case CompressionFormat.Deflate:
                     using (var memStream = new MemoryStream())
                     {
-                        using var stream = new DeflateStream(memStream, CompressionLevel.Optimal);
-                        Serializer.Serialize(stream, instance);
-#if NETCOREAPP
-                        stream.Flush();
+                        using (var stream = new DeflateStream(memStream, CompressionLevel.Optimal, leaveOpen: true))
+                        {
+                            Serializer.Serialize(stream, instance);
+                        }
                         return RedisValue.CreateFrom(memStream);
-#else
-                        stream.Close();
-                        return RedisValue.CreateFrom(new MemoryStream(memStream.ToArray()));
-#endif
                     }
                 case CompressionFormat.GZip:
                     using (var memStream = new MemoryStream())
                     {
-                        using var stream = new GZipStream(memStream, CompressionLevel.Optimal);
-                        Serializer.Serialize(stream, instance);
-#if NETCOREAPP
-                        stream.Flush();
+                        using (var stream = new GZipStream(memStream, CompressionLevel.Optimal, leaveOpen: true))
+                        {
+                            Serializer.Serialize(stream, instance);
+                        }
                         return RedisValue.CreateFrom(memStream);
-#else
-                        stream.Close();
-                        return RedisValue.CreateFrom(new MemoryStream(memStream.ToArray()));
-#endif
                     }
                 case CompressionFormat.None:
                 default:
