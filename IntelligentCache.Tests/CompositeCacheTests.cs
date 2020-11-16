@@ -5,7 +5,7 @@ using Xunit;
 
 namespace IntelligentCache.Tests
 {
-    public partial class CompositeCacheTests
+    public class CompositeCacheTests
     {
         [Fact]
         public void GetSet_when_l1_hits_then_l2_not_called()
@@ -63,7 +63,8 @@ namespace IntelligentCache.Tests
             Assert.True(l1);
             Assert.True(l2);
         }
-                [Fact]
+
+        [Fact]
         public async Task InvalidateAsync_when_called_l1_and_l2_called()
         {
             // Arrange

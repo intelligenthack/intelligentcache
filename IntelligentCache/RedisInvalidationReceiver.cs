@@ -1,16 +1,23 @@
-﻿using StackExchange.Redis;
+using StackExchange.Redis;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace IntelligentHack.IntelligentCache
 {
-    public class RedisInvalidatorReceiver : ICache
+    /// <summary>
+    /// Subscribes to invalidation messages on a Redis topic
+    /// and invalidates its inner cache when a message is received.
+    /// </summary>
+    public class RedisInvalidationReceiver : ICache
     {
         private readonly ICache _inner;
         private readonly ISubscriber _subscriber;
 
-        public RedisInvalidatorReceiver(ISubscriber subscriber, ICache inner, RedisChannel channel)
+        /// <param name="inner">The cache to invalidate.</param>
+        /// <param name="subscriber">An ISubscriber that allows subscribing to Redis pubsub messages.</param>
+        /// <param name="channel">The channel the ISubscriber gets invalidation messages from.</param>
+        public RedisInvalidationReceiver(ICache inner, ISubscriber subscriber, RedisChannel channel)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
@@ -28,7 +35,7 @@ namespace IntelligentHack.IntelligentCache
             return _inner.GetSet(key, calculateValue, duration);
         }
 
-        public ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             return _inner.GetSetAsync(key, calculateValue, duration);
         }
@@ -38,9 +45,9 @@ namespace IntelligentHack.IntelligentCache
             _inner.Invalidate(key);
         }
 
-        public ValueTask InvalidateAsync(string key)
+        public Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
-            return _inner.InvalidateAsync(key);
+            return _inner.InvalidateAsync(key, cancellationToken);
         }
     }
 }

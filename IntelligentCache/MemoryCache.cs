@@ -13,48 +13,60 @@ namespace IntelligentHack.IntelligentCache
         private readonly string _prefix;
         private readonly object _synclock = new object();
 
+        /// <param name="prefix">A prefix that is inserted before each key to prevent collisions with other users of the shared cache.</param>
         public MemoryCache(string prefix)
         {
+            if (prefix is null)
+            {
+                throw new ArgumentNullException(nameof(prefix));
+            }
+
             _prefix = prefix + ":";
         }
-
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
         {
             var k = _prefix + key;
             var res = (T)MemCache.Default.Get(k);
             if (res == null)
-            { 
+            {
                 lock (_synclock)
                 {
                     res = (T)MemCache.Default.Get(k);
                     if (res == null)
                     {
                         res = calculateValue();
-                        MemCache.Default.Set(k, res, DateTimeOffset.UtcNow.Add(duration));
+                        if (res == null)
+                            return res;
+
+                        var expiration = duration == TimeSpan.MaxValue
+                            ? DateTimeOffset.MaxValue
+                            : DateTimeOffset.UtcNow.Add(duration);
+
+                        MemCache.Default.Set(k, res, expiration);
                     }
                 }
             }
 
             return res;
         }
+
         public void Invalidate(string key)
         {
             var k = _prefix + key;
             MemCache.Default.Remove(k);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public async ValueTask<T> GetSetAsync<T>(string key, Func<CancellationToken, ValueTask<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
-            return GetSet(key, () => calculateValue(CancellationToken.None).GetAwaiter().GetResult(), duration);
+            var result = GetSet(key, () => calculateValue(cancellationToken).GetAwaiter().GetResult(), duration);
+            return Task.FromResult(result);
         }
 
-
-        public async ValueTask InvalidateAsync(string key)
+        public Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
             Invalidate(key);
+            return Task.CompletedTask;
         }
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     }
 }
