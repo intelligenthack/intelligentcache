@@ -6,6 +6,9 @@ using System.ServiceModel.Channels;
 
 namespace IntelligentHack.IntelligentCache
 {
+    /// <summary>
+    /// An implementation of <see cref="IRedisSerializer" /> that encodes objects as compressed protobuf.
+    /// </summary>
     public class ProtobufSerializer : IRedisSerializer
     {
         public CompressionFormat CompressionFormat { get; set; } = CompressionFormat.GZip;

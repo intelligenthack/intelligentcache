@@ -7,6 +7,10 @@ namespace IntelligentHack.IntelligentCache
     /// <summary>
     /// An implementation of <see cref="ICache" /> that always calls the <paramref name="calculateValue"/> callback.
     /// </summary>
+    /// <remarks>
+    /// This class provides a "null object" implementation of <see cref="ICache" />.
+    /// It can be useful in tests or other contexts that require a cache.
+    /// </remarks>
     public sealed class PassThroughCache : ICache
     {
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
