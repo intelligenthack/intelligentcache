@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace IntelligentHack.IntelligentCache
 {
+    /// <summary>
+    /// An implementation of <see cref="ICache" /> that stores values on Redis.
+    /// </summary>
     public class RedisCache : ICache
     {
         private readonly IConnectionMultiplexer _redis;

@@ -6,7 +6,7 @@ This library implements a cache with multiple hierarchical levels. It means that
 
 ![A sequence diagram showing three interactions between the application and two cache levels. In the first one, the application requests a key which is found on the first level and returned immediately. In that case, the second level isn't contacted at all. In the second interaction, the application requests a key which is not found on the first level, but is found on the second level. The value is stored in the first level and returned to the application. The last interaction shows the application requesting a key that is not found in either cache levels. A new value is then computed, which is stored into both levels.](levels.drawio.svg)
 
-Although the architecture supports an arbitrary number of levels, the predefined configuration is to have an in-process, in-memory cache as the first level, and a shared Redis instance as the second level.
+Although the architecture supports an arbitrary number of levels, the suggested configuration is to have an in-process, in-memory cache as the first level, and a shared Redis instance as the second level.
 
 ## Cache invalidation
 
@@ -20,7 +20,3 @@ The cache makes no consistency guarantees. Two instances of the application migh
 There are no consistency guarantees between different instances of the application. It is possible for two instances of the application to have different versions of the same data in cache, as illustrated in the following diagram.
 
 ![A temporal diagram that shows how different instances of the application can have an inconsistent view of the same data. Instance A requests a key which is found in the Redis level and stored in the in-memory level. Later, that value expires from Redis. When another instance of the application requests the same key, a new value is computed and stored in that instance's memory level. Until the old value expires from the first application instance's memory level, that instance still sees the old value.](consistency.drawio.svg)
-
-In order to minimize inconsistency window, after the Redis cache computes a value, it invalidates all other instances so that the inconsistency window is shortened. The following diagram shows this process.
-
-![The same temporal diagram as before, with the difference that after the Redis level computes a new value, it invalidates the first application instance's cache, therefore reducing the time window during which the different instances are inconsistent.](consistency-improved.drawio.svg)

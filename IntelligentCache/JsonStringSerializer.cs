@@ -3,6 +3,9 @@ using StackExchange.Redis;
 
 namespace IntelligentHack.IntelligentCache
 {
+    /// <summary>
+    /// An implementation of <see cref="IRedisSerializer" /> that encodes objects as JSON.
+    /// </summary>
     public class JsonStringSerializer : IRedisSerializer
     {
         public T Deserialize<T>(RedisValue value)
