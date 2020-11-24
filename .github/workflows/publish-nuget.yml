@@ -47,4 +47,3 @@ jobs:
       run: |
         $version = dir IntelligentCache/bin/Release/*.nupkg | % { $m = $_.Name -match "IntelligentHack\.IntelligentCache\.(.*)\.nupkg"; $Matches[1] }
         dotnet nuget push ./IntelligentCache/bin/Release/IntelligentHack.IntelligentCache.$version.nupkg --skip-duplicate --no-symbols true --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
-        dotnet nuget delete IntelligentHack.IntelligentCache $version --non-interactive --source nuget.org --api-key ${{secrets.NUGET_API_KEY}}
