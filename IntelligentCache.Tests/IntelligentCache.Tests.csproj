@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netcoreapp3.1;net461</TargetFrameworks>
+        <TargetFrameworks>net461;net5.0;netcoreapp3.1</TargetFrameworks>
         <IsPackable>false</IsPackable>
-        <LangVersion>8.0</LangVersion>
+        <LangVersion>9</LangVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
@@ -16,6 +16,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\IntelligentCache.Newtonsoft.Json\IntelligentCache.Newtonsoft.Json.csproj" />
+        <ProjectReference Include="..\IntelligentCache.Protobuf\IntelligentCache.Protobuf.csproj" />
         <ProjectReference Include="..\IntelligentCache\IntelligentCache.csproj" />
     </ItemGroup>
 

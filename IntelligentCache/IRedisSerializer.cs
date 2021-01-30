@@ -15,6 +15,6 @@ namespace IntelligentHack.IntelligentCache
         /// <summary>
         /// Converts the specified value to an object of type <typeparamref name="T"/>.
         /// </summary>
-        T Deserialize<T>(RedisValue value);
+        T? Deserialize<T>(RedisValue value);
     }
 }

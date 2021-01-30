@@ -1,29 +1,31 @@
-using ProtoBuf;
-using StackExchange.Redis;
-using System.IO;
 using System.IO.Compression;
 using System.ServiceModel.Channels;
+using Microsoft.IO;
+using ProtoBuf;
+using StackExchange.Redis;
 
-namespace IntelligentHack.IntelligentCache
+namespace IntelligentHack.IntelligentCache.Protobuf
 {
     /// <summary>
     /// An implementation of <see cref="IRedisSerializer" /> that encodes objects as compressed protobuf.
     /// </summary>
     public class ProtobufSerializer : IRedisSerializer
     {
+        private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
+        
         public CompressionFormat CompressionFormat { get; set; } = CompressionFormat.GZip;
 
-        public T Deserialize<T>(RedisValue value)
+        public T? Deserialize<T>(RedisValue value)
         {
             switch (CompressionFormat)
             {
                 case CompressionFormat.Deflate:
-                    using (var stream = new DeflateStream(new MemoryStream(value), CompressionMode.Decompress))
+                    using (var stream = new DeflateStream(MemoryStreamManager.GetStream((byte[])value), CompressionMode.Decompress))
                     {
                         return Serializer.Deserialize<T>(stream);
                     }
                 case CompressionFormat.GZip:
-                    using (var stream = new GZipStream(new MemoryStream(value), CompressionMode.Decompress))
+                    using (var stream = new GZipStream(MemoryStreamManager.GetStream((byte[])value), CompressionMode.Decompress))
                     {
                         return Serializer.Deserialize<T>(stream);
                     }
@@ -38,7 +40,7 @@ namespace IntelligentHack.IntelligentCache
             switch (CompressionFormat)
             {
                 case CompressionFormat.Deflate:
-                    using (var memStream = new MemoryStream())
+                    using (var memStream = MemoryStreamManager.GetStream())
                     {
                         using (var stream = new DeflateStream(memStream, CompressionLevel.Optimal, leaveOpen: true))
                         {
@@ -47,7 +49,7 @@ namespace IntelligentHack.IntelligentCache
                         return RedisValue.CreateFrom(memStream);
                     }
                 case CompressionFormat.GZip:
-                    using (var memStream = new MemoryStream())
+                    using (var memStream = MemoryStreamManager.GetStream())
                     {
                         using (var stream = new GZipStream(memStream, CompressionLevel.Optimal, leaveOpen: true))
                         {
@@ -57,7 +59,7 @@ namespace IntelligentHack.IntelligentCache
                     }
                 case CompressionFormat.None:
                 default:
-                    using (var stream = new MemoryStream())
+                    using (var stream = MemoryStreamManager.GetStream())
                     {
                         Serializer.Serialize(stream, instance);
                         return RedisValue.CreateFrom(stream);

@@ -22,12 +22,12 @@ namespace IntelligentHack.IntelligentCache
             _level2 = level2 ?? throw new ArgumentNullException(nameof(level2));
         }
 
-        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
+        public T? GetSet<T>(string key, Func<T?> calculateValue, TimeSpan duration) where T : class
         {
             return _level1.GetSet(key, () => _level2.GetSet(key, calculateValue, duration), duration);
         }
 
-        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+        public Task<T?> GetSetAsync<T>(string key, Func<CancellationToken, Task<T?>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             return _level1.GetSetAsync(key, ct => _level2.GetSetAsync(key, calculateValue, duration, ct), duration, cancellationToken);
         }

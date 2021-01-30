@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net461;net5.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+        <LangVersion>9</LangVersion>
+        <RootNamespace>IntelligentHack.IntelligentCache.Newtonsoft.Json</RootNamespace>
+        <AssemblyName>IntelligentHack.IntelligentCache.Newtonsoft.Json</AssemblyName>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="11.0.1">
+            <VersionRangeType>Minimum</VersionRangeType>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\IntelligentCache\IntelligentCache.csproj" />
+    </ItemGroup>
+
+</Project>

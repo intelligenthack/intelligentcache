@@ -26,28 +26,18 @@ namespace IntelligentHack.IntelligentCache
         }
 
         private void Pulse(RedisChannel channel, RedisValue value)
-        {
-            _inner.Invalidate(value);
-        }
+            => _inner.Invalidate(value);
 
-        public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
-        {
-            return _inner.GetSet(key, calculateValue, duration);
-        }
+        public T? GetSet<T>(string key, Func<T?> calculateValue, TimeSpan duration) where T : class
+            => _inner.GetSet(key, calculateValue, duration);
 
-        public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
-        {
-            return _inner.GetSetAsync(key, calculateValue, duration);
-        }
+        public Task<T?> GetSetAsync<T>(string key, Func<CancellationToken, Task<T?>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
+            => _inner.GetSetAsync(key, calculateValue, duration, cancellationToken);
 
         public void Invalidate(string key)
-        {
-            _inner.Invalidate(key);
-        }
+            => _inner.Invalidate(key);
 
         public Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
-        {
-            return _inner.InvalidateAsync(key, cancellationToken);
-        }
+            => _inner.InvalidateAsync(key, cancellationToken);
     }
 }

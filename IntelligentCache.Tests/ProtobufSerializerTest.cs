@@ -1,6 +1,7 @@
 using IntelligentHack.IntelligentCache;
 using ProtoBuf;
 using System.ServiceModel.Channels;
+using IntelligentHack.IntelligentCache.Protobuf;
 using Xunit;
 
 namespace IntelligentCache.Tests

@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntelligentCache.Tests", "IntelligentCache.Tests\IntelligentCache.Tests.csproj", "{DE5B0C27-C362-4EDB-8C88-8973B5E7B3CA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntelligentCache.Protobuf", "IntelligentCache.Protobuf\IntelligentCache.Protobuf.csproj", "{BB8BA31B-7143-4147-B0ED-77B0CC34B8A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntelligentCache.Newtonsoft.Json", "IntelligentCache.Newtonsoft.Json\IntelligentCache.Newtonsoft.Json.csproj", "{D672A79C-89E8-4359-BA5B-06E8BAA2442A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{DE5B0C27-C362-4EDB-8C88-8973B5E7B3CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE5B0C27-C362-4EDB-8C88-8973B5E7B3CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE5B0C27-C362-4EDB-8C88-8973B5E7B3CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB8BA31B-7143-4147-B0ED-77B0CC34B8A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB8BA31B-7143-4147-B0ED-77B0CC34B8A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB8BA31B-7143-4147-B0ED-77B0CC34B8A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB8BA31B-7143-4147-B0ED-77B0CC34B8A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D672A79C-89E8-4359-BA5B-06E8BAA2442A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D672A79C-89E8-4359-BA5B-06E8BAA2442A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D672A79C-89E8-4359-BA5B-06E8BAA2442A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D672A79C-89E8-4359-BA5B-06E8BAA2442A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
