@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2020 Intelligent Hack srls
+Copyright (c) 2020 IntelligentCache and its authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
