@@ -24,13 +24,13 @@ jobs:
         fetch-depth: 0
 
     - name: Setup Nuget.exe
-      uses: warrenbuckley/Setup-Nuget@v1
+      uses: NuGet/setup-nuget@v1.0.5
       
     - name: Restore packages
       run: nuget restore IntelligentCache.sln
       
-    - name: Setup MSBuild.exe
-      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: setup-msbuild
+      uses: microsoft/setup-msbuild@v1
       
     - name: Build with MSBuild
       run: msbuild  IntelligentCache.sln -p:Configuration=Release
