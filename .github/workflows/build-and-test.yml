@@ -21,30 +21,5 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup Nuget.exe
-      uses: NuGet/setup-nuget@v1.0.5
-      
-    - name: Restore packages
-      run: nuget restore IntelligentCache.sln
-      
-    - name: setup-msbuild
-      uses: microsoft/setup-msbuild@v1
-
-    - name: Setup .NET Core 3.1.x
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.x
-
-    - name: Setup .NET Core 5.0.x
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.x
-
-    - name: Build with MSBuild
-      run: msbuild  IntelligentCache.sln -p:Configuration=Release
-
-    - name: Build
-      run: dotnet build --configuration Release /p:DisableGitVersionTask=true
-      
     - name: Run tests
-      run: dotnet test --configuration Release --no-restore /p:DisableGitVersionTask=true
+      run: dotnet test --configuration Release /p:DisableGitVersionTask=true
