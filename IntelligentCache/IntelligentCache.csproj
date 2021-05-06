@@ -37,7 +37,7 @@ The cache has two levels. The first one is in memory and the second one is Redis
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="GitVersionTask" Version="5.3.7">
+        <PackageReference Include="GitVersionTask" Version="5.5.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
