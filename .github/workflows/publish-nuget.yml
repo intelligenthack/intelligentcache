@@ -29,19 +29,8 @@ jobs:
           git checkout -b master
         }
 
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.*
-
-    - name: Build
-      run: del Env:\GITHUB_ACTIONS ; dotnet build --configuration Release
-
-    - name: Run tests
-      run: del Env:\GITHUB_ACTIONS ; dotnet test --configuration Release --no-restore
-
     - name: Pack
-      run: del Env:\GITHUB_ACTIONS ; dotnet pack ./IntelligentCache/IntelligentCache.csproj --configuration Release --no-restore
+      run: del Env:\GITHUB_ACTIONS ; dotnet pack ./IntelligentCache/IntelligentCache.csproj --configuration Release 
 
     - name: Push the generated package to NuGet.org registry
       run: |
