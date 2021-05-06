@@ -8,6 +8,7 @@ on:
     branches: [ master ]
 
 jobs:
+
   build:
     name: Build
     runs-on: windows-latest
@@ -22,7 +23,19 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup .NET ${{ matrix.dotnet-version }}
+    - name: Setup Nuget.exe
+      uses: warrenbuckley/Setup-Nuget@v1
+      
+    - name: Restore packages
+      run: nuget restore IntelligentCache.sln
+      
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+      
+    - name: Build with MSBuild
+      run: msbuild  IntelligentCache.sln -p:Configuration=Release
+
+    - name: Setup .NET Core ${{ matrix.dotnet-version }}
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
