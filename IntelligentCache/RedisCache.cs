@@ -42,7 +42,7 @@ namespace IntelligentHack.IntelligentCache
                 return res;
             }
 
-            return Serializer.Deserialize<T>(value.ToString());
+            return Serializer.Deserialize<T>(value);
         }
 
         public async Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
@@ -65,7 +65,7 @@ namespace IntelligentHack.IntelligentCache
                 return res;
             }
 
-            return Serializer.Deserialize<T>(value.ToString());
+            return Serializer.Deserialize<T>(value);
         }
 
         public void Invalidate(string key)

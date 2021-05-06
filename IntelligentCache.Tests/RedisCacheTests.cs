@@ -159,5 +159,35 @@ namespace IntelligentCache.Tests
             Assert.True(setValue.IsNull);
             Assert.Null(setExpiration);
         }
+
+        [Fact]
+        public void GetSet_uses_cached_protobuf_object_on_hit()
+        {
+            // Arrange
+            string? lookupKey = null;
+            var entity = new Entity { IntProp = 5 };
+            var protoSerializer = new ProtobufSerializer();
+
+            var multiplexer = FakeRedis.CreateConnectionMultiplexer(onGet: key => { lookupKey = key; return protoSerializer.Serialize(entity); });
+
+            var sut = new RedisCache(multiplexer, "prefix") { Serializer = protoSerializer };
+            var called = false;
+
+            // Act
+            var valueFromCache = sut.GetSet("testKey", () => { called = true; return new Entity(); }, TimeSpan.FromSeconds(10));
+
+            // Assert
+            Assert.False(called);
+            Assert.NotNull(valueFromCache);
+            Assert.Equal(5, entity.IntProp);
+            Assert.Equal("prefix:testKey", lookupKey);
+        }
+
+        [ProtoBuf.ProtoContract]
+        public class Entity
+        {
+            [ProtoBuf.ProtoMember(1)]
+            public int IntProp { get; set; }
+        }
     }
 }
