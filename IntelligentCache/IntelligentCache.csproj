@@ -7,7 +7,7 @@
         <RootNamespace>IntelligentHack.IntelligentCache</RootNamespace>
         <AssemblyName>IntelligentHack.IntelligentCache</AssemblyName>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>1.0.1</Version>
+        <Version>3.0.2</Version>
         <PackageId>IntelligentHack.IntelligentCache</PackageId>
         <Authors>Intelligent Cache and its authors</Authors>
         <PackageProjectUrl>https://github.com/intelligenthack/intelligent-cache</PackageProjectUrl>
