@@ -13,8 +13,8 @@ namespace IntelligentCache.Tests
         public void Invalidate_publishes_an_invalidation_message()
         {
             // Arrange
-            string? publishedChannel = null;
-            string? publishedMessage = null;
+            string publishedChannel = null;
+            string publishedMessage = null;
 
             var subscriber = FakeRedis.CreateSubscriber(onPublish: (c, m) =>
             {
@@ -36,8 +36,8 @@ namespace IntelligentCache.Tests
         public async Task InvalidateAsync_publishes_an_invalidation_message()
         {
             // Arrange
-            string? publishedChannel = null;
-            string? publishedMessage = null;
+            string publishedChannel = null;
+            string publishedMessage = null;
 
             var subscriber = FakeRedis.CreateSubscriber(onPublish: (c, m) =>
             {

@@ -2,24 +2,20 @@
 
     <PropertyGroup>
         <TargetFrameworks>net461;netcoreapp3.1;net48;net5.0</TargetFrameworks>
-        <Nullable>enable</Nullable>
         <LangVersion>8.0</LangVersion>
         <RootNamespace>IntelligentHack.IntelligentCache</RootNamespace>
         <AssemblyName>IntelligentHack.IntelligentCache</AssemblyName>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <Version>3.0.2</Version>
         <PackageId>IntelligentHack.IntelligentCache</PackageId>
-        <Authors>Intelligent Cache and its authors</Authors>
+        <Authors>Marco Cecconi, Oded Coster</Authors>
         <PackageProjectUrl>https://github.com/intelligenthack/intelligent-cache</PackageProjectUrl>
         <RepositoryUrl>https://github.com/intelligenthack/intelligent-cache.git</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.</Description>
         <PackageTags>Cache;Redis;AspNet</PackageTags>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Company>Intelligent Cache</Company>
-        
-        <GitVersion_NoFetchEnabled>true</GitVersion_NoFetchEnabled>
-        <GitVersion_NoNormalizeEnabled>true</GitVersion_NoNormalizeEnabled>
+        <Company>Intelligent Hack</Company>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -34,10 +30,6 @@
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="11.0.1">
             <VersionRangeType>Minimum</VersionRangeType>
-        </PackageReference>
-        <PackageReference Include="Nullable" Version="1.3.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="protobuf-net" Version="3.0.52" />
         <PackageReference Include="StackExchange.Redis" Version="2.0.495" />

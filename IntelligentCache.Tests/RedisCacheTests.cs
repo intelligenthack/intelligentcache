@@ -14,8 +14,8 @@ namespace IntelligentCache.Tests
         public void GetSet_calls_calculateValue_on_miss()
         {
             // Arrange
-            string? setKey = null;
-            string? setValue = null;
+            string setKey = null;
+            string setValue = null;
             TimeSpan? setExpiration = default;
 
             var multiplexer = FakeRedis.CreateConnectionMultiplexer(onSet: (key, value, expiration) =>
@@ -43,8 +43,8 @@ namespace IntelligentCache.Tests
         public async Task GetSetAsync_calls_calculateValue_on_miss()
         {
             // Arrange
-            string? setKey = null;
-            string? setValue = null;
+            string setKey = null;
+            string setValue = null;
             TimeSpan? setExpiration = default;
 
             var multiplexer = FakeRedis.CreateConnectionMultiplexer(onSet: (key, value, expiration) =>
@@ -72,7 +72,7 @@ namespace IntelligentCache.Tests
         public void GetSet_uses_cached_value_on_hit()
         {
             // Arrange
-            string? lookupKey = null;
+            string lookupKey = null;
 
             var multiplexer = FakeRedis.CreateConnectionMultiplexer(onGet: key => { lookupKey = key; return "\"42\""; });
 
@@ -92,7 +92,7 @@ namespace IntelligentCache.Tests
         public async Task GetSetAsync_uses_cached_value_on_hit()
         {
             // Arrange
-            string? lookupKey = null;
+            string lookupKey = null;
 
             var multiplexer = FakeRedis.CreateConnectionMultiplexer(onGet: key => { lookupKey = key; return "\"42\""; });
 
@@ -112,7 +112,7 @@ namespace IntelligentCache.Tests
         public void Invalidate_clears_the_value()
         {
             // Arrange
-            string? setKey = null;
+            string setKey = null;
             RedisValue setValue = default;
             TimeSpan? setExpiration = default;
 
@@ -138,7 +138,7 @@ namespace IntelligentCache.Tests
         public async Task InvalidateAsync_clears_the_value()
         {
             // Arrange
-            string? setKey = null;
+            string setKey = null;
             RedisValue setValue = default;
             TimeSpan? setExpiration = default;
 
@@ -164,7 +164,7 @@ namespace IntelligentCache.Tests
         public void GetSet_uses_cached_protobuf_object_on_hit()
         {
             // Arrange
-            string? lookupKey = null;
+            string lookupKey = null;
             var entity = new Entity { IntProp = 5 };
             var protoSerializer = new ProtobufSerializer();
 

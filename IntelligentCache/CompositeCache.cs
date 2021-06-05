@@ -5,15 +5,18 @@ using System.Threading.Tasks;
 namespace IntelligentHack.IntelligentCache
 {
     /// <summary>
-    /// Creates a two-level hierarchical cache.
-    /// Values are retrieved first from the first level.
-    /// If no value is found, the second level is used.
+    /// Composes two caches into a two-level hierarchical cache.
     /// </summary>
     public sealed class CompositeCache : ICache
     {
         private readonly ICache _level1;
         private readonly ICache _level2;
 
+        /// <summary>
+        /// Creates a two-level hierarchical cache.
+        /// Values are retrieved first from the first level.
+        /// If no value is found, the second level is used.
+        /// </summary>
         /// <param name="level1">This is the first cache to be checked. If there is a cache miss, the second level cache will be attempted</param>
         /// <param name="level2">Second level cache (usually a shared/remote cache in a webfarm). Called when the first level cache misses.</param>
         public CompositeCache(ICache level1, ICache level2)
@@ -22,22 +25,26 @@ namespace IntelligentHack.IntelligentCache
             _level2 = level2 ?? throw new ArgumentNullException(nameof(level2));
         }
 
+        /// <inheritdoc />
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class
         {
             return _level1.GetSet(key, () => _level2.GetSet(key, calculateValue, duration), duration);
         }
 
+        /// <inheritdoc />
         public Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T : class
         {
             return _level1.GetSetAsync(key, ct => _level2.GetSetAsync(key, calculateValue, duration, ct), duration, cancellationToken);
         }
 
+        /// <inheritdoc />
         public void Invalidate(string key)
         {
             _level2.Invalidate(key);
             _level1.Invalidate(key);
         }
 
+        /// <inheritdoc />
         public async Task InvalidateAsync(string key, CancellationToken cancellationToken = default)
         {
             await _level2.InvalidateAsync(key, cancellationToken).ConfigureAwait(false);

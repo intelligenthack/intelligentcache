@@ -1,5 +1,4 @@
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-
 using IntelligentHack.IntelligentCache;
 using System;
 using System.Threading;
