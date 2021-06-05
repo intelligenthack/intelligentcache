@@ -9,7 +9,7 @@ namespace IntelligentCache.Tests
         public void Invalidation_messages_call_Invalidate_on_inner_cache()
         {
             // Arrange
-            string? invalidatedKey = null;
+            string invalidatedKey = null;
             var innerCache = new InspectableCache(key => { invalidatedKey = key; });
 
             var subscriber = FakeRedis.CreateSubscriber();
