@@ -9,9 +9,9 @@
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <Version>3.0.2</Version>
         <PackageId>IntelligentHack.IntelligentCache</PackageId>
-        <Authors>Intelligent Cache and its authors</Authors>
-        <PackageProjectUrl>https://github.com/intelligenthack/intelligent-cache</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/intelligenthack/intelligent-cache.git</RepositoryUrl>
+        <Authors>Marco Cecconi, Oded Coster, Antoine Aubry</Authors>
+        <PackageProjectUrl>https://github.com/intelligenthack/intelligentcache</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/intelligenthack/intelligentcache.git</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.</Description>
         <PackageTags>Cache;Redis;AspNet</PackageTags>
