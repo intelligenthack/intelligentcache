@@ -16,7 +16,7 @@
         <Description>This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.</Description>
         <PackageTags>Cache;Redis;AspNet</PackageTags>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Company>Intelligent Cache</Company>
+        <Company>Intelligent Hack</Company>
         
         <GitVersion_NoFetchEnabled>true</GitVersion_NoFetchEnabled>
         <GitVersion_NoNormalizeEnabled>true</GitVersion_NoNormalizeEnabled>
