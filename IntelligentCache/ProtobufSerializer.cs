@@ -1,5 +1,6 @@
 using ProtoBuf;
 using StackExchange.Redis;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.ServiceModel.Channels;
@@ -28,8 +29,9 @@ namespace IntelligentHack.IntelligentCache
                         return Serializer.Deserialize<T>(stream);
                     }
                 case CompressionFormat.None:
-                default:
                     return Serializer.Deserialize<T>(value);
+                default:
+                    throw new InvalidOperationException("Unknown CompressionFormat");
             }
         }
 
@@ -56,13 +58,14 @@ namespace IntelligentHack.IntelligentCache
                         return RedisValue.CreateFrom(memStream);
                     }
                 case CompressionFormat.None:
-                default:
                     using (var stream = new MemoryStream())
                     {
                         Serializer.Serialize(stream, instance);
                         return RedisValue.CreateFrom(stream);
                     }
-            };
+               default:
+                    throw new InvalidOperationException("Unknown CompressionFormat");
+            }
         }
     }
 }

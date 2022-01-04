@@ -13,7 +13,6 @@ namespace IntelligentHack.IntelligentCache
         /// <param name="key">The cache key.</param>
         /// <param name="calculateValue">A callback that produces a new value if the key is not in cache.</param>
         /// <param name="duration">Indicates how long the value should be kept in the cache. Use <see cref="TimeSpan.MaxValue"/> to prevent expiration.</param>
-        /// <returns></returns>
         Task<T> GetSetAsync<T>(string key, Func<CancellationToken, Task<T>> calculateValue, TimeSpan duration, CancellationToken cancellationToken = default) where T: class;
 
         /// <summary>
@@ -23,7 +22,6 @@ namespace IntelligentHack.IntelligentCache
         /// <param name="key">The cache key.</param>
         /// <param name="calculateValue">A callback that produces a new value if the key is not in cache.</param>
         /// <param name="duration">Indicates how long the value should be kept in the cache. Use <see cref="TimeSpan.MaxValue"/> to prevent expiration.</param>
-        /// <returns></returns>
         T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T: class;
 
         /// <summary>
