@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net5.0</TargetFrameworks>
+        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
         <LangVersion>8.0</LangVersion>
         <RootNamespace>IntelligentHack.IntelligentCache</RootNamespace>
         <AssemblyName>IntelligentHack.IntelligentCache</AssemblyName>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>3.2</Version>
+        <Version>3.3</Version>
         <PackageId>IntelligentHack.IntelligentCache</PackageId>
         <Authors>Marco Cecconi, Oded Coster, Antoine Aubry</Authors>
         <PackageProjectUrl>https://github.com/intelligenthack/intelligent-cache</PackageProjectUrl>
