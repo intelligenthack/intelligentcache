@@ -62,7 +62,7 @@ jobs:
         id: nuget-login
         uses: nuget/login@v1
         with:
-          user: IntelligentHack
+          user: sklivvz
 
       - name: Push to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
