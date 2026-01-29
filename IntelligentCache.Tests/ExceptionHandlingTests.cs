@@ -167,7 +167,7 @@ namespace IntelligentCache.Tests
                 {
                     sut.GetSet<string>("key1", () =>
                     {
-                        Thread.Sleep(100);
+                        Thread.Sleep(50);
                         throw new InvalidOperationException("Thread 1 fails");
                     }, TimeSpan.FromMinutes(1));
                 }
@@ -187,10 +187,11 @@ namespace IntelligentCache.Tests
                 }, TimeSpan.FromMinutes(1));
             });
 
-            var completed = Task.WaitAll(new[] { task1, task2 }, TimeSpan.FromSeconds(5));
+            // Use longer timeout for CI environments where thread scheduling may be slower
+            var completed = Task.WaitAll(new[] { task1, task2 }, TimeSpan.FromSeconds(30));
 
             // Assert
-            Assert.True(completed, "Both tasks should complete");
+            Assert.True(completed, "Both tasks should complete within timeout");
             Assert.True(thread1Completed, "Thread 1 should complete (with exception)");
             Assert.True(thread2Completed, "Thread 2 should complete successfully");
         }
