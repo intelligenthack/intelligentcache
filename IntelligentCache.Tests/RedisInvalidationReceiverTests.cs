@@ -1,4 +1,5 @@
 using IntelligentHack.IntelligentCache;
+using StackExchange.Redis;
 using Xunit;
 
 namespace IntelligentCache.Tests
@@ -14,10 +15,10 @@ namespace IntelligentCache.Tests
 
             var subscriber = FakeRedis.CreateSubscriber();
 
-            var sut = new RedisInvalidationReceiver(innerCache, subscriber, "invalidation");
+            var sut = new RedisInvalidationReceiver(innerCache, subscriber, RedisChannel.Literal("invalidation"));
 
             // Act
-            subscriber.Publish("invalidation", "testKey");
+            subscriber.Publish(RedisChannel.Literal("invalidation"), "testKey");
 
             // Assert
             Assert.Equal("testKey", invalidatedKey);

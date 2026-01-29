@@ -135,7 +135,7 @@ The following code shows a possible composition of these components to implement
 
 ```c#
 ISubscriber subscriber = GetRedisSubscriber();
-var invalidationChannel = "cache-invalidations";
+var invalidationChannel = RedisChannel.Literal("cache-invalidations");
 var cache = new CompositeCache(
     new RedisInvalidationReceiver(
         new MemoryCache(/* arguments */),
@@ -154,7 +154,7 @@ The `RedisInvalidationSender` constructor requires the following parameters:
 | Name | Description |
 |-|-|
 | `subscriber` | An ISubscriber that allows publishing Redis pubsub messages. |
-| `channel` | The channel where to publish invalidation messages. |
+| `channel` | A `RedisChannel` where to publish invalidation messages. Use `RedisChannel.Literal("channel-name")` to create one. |
 
 The `RedisInvalidationReceiver` constructor requires the following parameters:
 
@@ -162,4 +162,4 @@ The `RedisInvalidationReceiver` constructor requires the following parameters:
 |-|-|
 | `inner` | The cache to invalidate. |
 | `subscriber` | An ISubscriber that allows subscribing to Redis pubsub messages. |
-| `channel` | The channel to subscribe invalidation messages from. |
+| `channel` | A `RedisChannel` to subscribe invalidation messages from. Use `RedisChannel.Literal("channel-name")` to create one. |

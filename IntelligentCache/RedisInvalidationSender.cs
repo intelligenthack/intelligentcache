@@ -18,7 +18,8 @@ namespace IntelligentHack.IntelligentCache
         public RedisInvalidationSender(ISubscriber subscriber, RedisChannel channel)
         {
             _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
-            _channel = ((string)channel) ?? throw new ArgumentNullException(nameof(channel));
+            if (channel.IsNullOrEmpty) throw new ArgumentException("Channel cannot be null or empty", nameof(channel));
+            _channel = channel;
         }
 
         public T GetSet<T>(string key, Func<T> calculateValue, TimeSpan duration) where T : class

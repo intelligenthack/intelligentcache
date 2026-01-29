@@ -1,6 +1,7 @@
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
 using IntelligentHack.IntelligentCache;
+using StackExchange.Redis;
 using System;
 using System.Threading.Tasks;
 using Xunit;
@@ -22,7 +23,7 @@ namespace IntelligentCache.Tests
                 publishedMessage = m;
             });
 
-            var sut = new RedisInvalidationSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, RedisChannel.Literal("invalidation"));
 
             // Act
             sut.Invalidate("testKey");
@@ -45,7 +46,7 @@ namespace IntelligentCache.Tests
                 publishedMessage = m;
             });
 
-            var sut = new RedisInvalidationSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, RedisChannel.Literal("invalidation"));
 
             // Act
             await sut.InvalidateAsync("testKey");
@@ -61,7 +62,7 @@ namespace IntelligentCache.Tests
         {
             // Arrange
             var subscriber = FakeRedis.CreateSubscriber();
-            var sut = new RedisInvalidationSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, RedisChannel.Literal("invalidation"));
 
             var count = 0;
 
@@ -78,7 +79,7 @@ namespace IntelligentCache.Tests
         {
             // Arrange
             var subscriber = FakeRedis.CreateSubscriber();
-            var sut = new RedisInvalidationSender(subscriber, "invalidation");
+            var sut = new RedisInvalidationSender(subscriber, RedisChannel.Literal("invalidation"));
 
             var count = 0;
 

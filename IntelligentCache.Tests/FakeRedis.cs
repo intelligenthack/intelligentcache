@@ -22,21 +22,38 @@ namespace IntelligentCache.Tests
             A.CallTo(() => database.StringGetAsync(A<RedisKey>._, A<CommandFlags>._))
                 .ReturnsLazily((RedisKey key, CommandFlags _) => onGet?.Invoke(key) ?? RedisValue.Null);
 
-            A.CallTo(() => database.StringSet(A<RedisKey>._, A<RedisValue>._, A<TimeSpan?>._, A<When>._, A<CommandFlags>._))
-                .ReturnsLazily((RedisKey key, RedisValue value, TimeSpan? expiry, When _, CommandFlags __) =>
+            A.CallTo(() => database.StringSet(A<RedisKey>._, A<RedisValue>._, A<Expiration>._, A<ValueCondition>._, A<CommandFlags>._))
+                .ReturnsLazily((RedisKey key, RedisValue value, Expiration expiry, ValueCondition _, CommandFlags __) =>
                 {
-                    onSet?.Invoke(key, value, expiry);
+                    onSet?.Invoke(key, value, ExpirationToTimeSpan(expiry));
                     return true;
                 });
 
-            A.CallTo(() => database.StringSetAsync(A<RedisKey>._, A<RedisValue>._, A<TimeSpan?>._, A<When>._, A<CommandFlags>._))
-                .ReturnsLazily((RedisKey key, RedisValue value, TimeSpan? expiry, When _, CommandFlags __) =>
+            A.CallTo(() => database.StringSetAsync(A<RedisKey>._, A<RedisValue>._, A<Expiration>._, A<ValueCondition>._, A<CommandFlags>._))
+                .ReturnsLazily((RedisKey key, RedisValue value, Expiration expiry, ValueCondition _, CommandFlags __) =>
                 {
-                    onSet?.Invoke(key, value, expiry);
+                    onSet?.Invoke(key, value, ExpirationToTimeSpan(expiry));
                     return true;
                 });
 
             return multiplexer;
+        }
+
+        private static TimeSpan? ExpirationToTimeSpan(Expiration expiry)
+        {
+            // Parse from ToString() output like "EX 10" (seconds) or "PX 1000" (milliseconds) or empty
+            var str = expiry.ToString();
+            if (string.IsNullOrEmpty(str)) return null;
+
+            var parts = str.Split(' ');
+            if (parts.Length != 2 || !long.TryParse(parts[1], out var value)) return null;
+
+            return parts[0] switch
+            {
+                "EX" => TimeSpan.FromSeconds(value),
+                "PX" => TimeSpan.FromMilliseconds(value),
+                _ => null
+            };
         }
 
         public static ISubscriber CreateSubscriber(Action<RedisChannel, RedisValue> onPublish = null)

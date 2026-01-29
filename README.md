@@ -33,7 +33,7 @@ In order to create a local cache that invalidates when the remote cache is nuked
 
 ```c#
 ISubscriber subscriber = GetRedisSubscriber();
-var invalidationChannel = "cache-invalidations";
+var invalidationChannel = RedisChannel.Literal("cache-invalidations");
 var cache = new CompositeCache(
     new RedisInvalidationReceiver(
         new MemoryCache(/* arguments */),
@@ -53,15 +53,11 @@ Take in account that when a `calculateValue` function returns a `null` value not
 
 - [API Documentation](doc/api-documentation.md)
 
-- [Using with Asp.Net-Core](doc/dotnet-core.md)
-
-- [Architecture](doc/architecture.md)
-
 - [Requirements and best practices](doc/best-practices.md)
 
 # Upgrading from a previous version
 
-This package follows [semantic versioning](https://semver.org/), which means that upgrading to a higher MINOR or PATCH version should always work. Upgrading to a higher MAJOR version will require code changes. Make sure to read the release notes before upgrading.
+This package follows [semantic versioning](https://semver.org/), which means that upgrading to a higher MINOR or PATCH version should always work. Upgrading to a higher MAJOR version will require code changes. Make sure to read the [CHANGELOG](CHANGELOG.md) before upgrading.
 
 # Contributing
 
