@@ -61,6 +61,63 @@ The `Invalidate` method takes the following parameters:
 | ----- | ----------------------------------------------------- |
 | `key` | The key that was used previously to lookup the value. |
 
+## Null Value Handling
+
+When `calculateValue` returns `null`, the value is **not cached** and `null` is returned to the caller. This is by design:
+
+```c#
+var result = cache.GetSet("key", () =>
+{
+    var item = database.FindById(id);
+    return item; // If null, nothing is cached
+}, TimeSpan.FromMinutes(5));
+
+// result is null, and subsequent calls will invoke calculateValue again
+```
+
+### Why null is not cached
+
+1. **Ambiguity**: A cached `null` is indistinguishable from a cache miss
+2. **Negative caching risks**: Caching "not found" results can cause issues when data is created
+3. **Storage limitations**: Some cache backends don't support null values
+
+### Caching "not found" results
+
+If you need to cache negative results (e.g., to avoid repeated database lookups for non-existent items), use a wrapper type:
+
+```c#
+public class CacheResult<T> where T : class
+{
+    public T Value { get; set; }
+    public bool Found { get; set; }
+
+    public static CacheResult<T> NotFound() => new() { Found = false };
+    public static CacheResult<T> Of(T value) => new() { Value = value, Found = true };
+}
+
+// Usage
+var result = cache.GetSet("user:123", () =>
+{
+    var user = database.FindUser(123);
+    return user != null
+        ? CacheResult<User>.Of(user)
+        : CacheResult<User>.NotFound();
+}, TimeSpan.FromMinutes(5));
+
+if (result.Found)
+{
+    // Use result.Value
+}
+else
+{
+    // User doesn't exist (and this fact is now cached)
+}
+```
+
+### Null keys
+
+Cache keys can technically be `null` or empty, but this is not recommended. The key will be prefixed (e.g., `"myapp:null"` or `"myapp:"`), which may cause unexpected collisions. Always use meaningful, non-empty keys.
+
 ## MemoryCache
 
 `MemoryCache` is an in-memory implementation that uses `System.Runtime.Caching.MemoryCache` as backing store.
@@ -91,14 +148,109 @@ The `RedisCache` constructor requires the following parameters:
 | `redis` | An `IConnectionMultiplexer` that mediates access to Redis. |
 | `prefix` | This prefix is used to compose the cache key to prevent collisions with other data stored in Redis. A colon (`:`) character is always appended to this value. |
 
-### Custom serialization
+### Serialization
 
-Values stored on Redis need to be serialized. By default, they are serialized to JSON. This can be customized by setting the `Serializer` property to a different implementation of `IRedisSerializer`. This library provides an implementation that uses Protobuf. Following is an example of using that serializer.
+Values stored on Redis need to be serialized. The `Serializer` property controls how objects are converted to and from Redis values.
+
+#### JsonStringSerializer (Default)
+
+By default, `RedisCache` uses `JsonStringSerializer`, which serializes objects to JSON using [Json.NET](https://www.newtonsoft.com/json):
 
 ```c#
-var cache = new RedisCache(/* arguments */)
+var cache = new RedisCache(redis, "myapp");
+// Equivalent to:
+var cache = new RedisCache(redis, "myapp") { Serializer = new JsonStringSerializer() };
+```
+
+JSON serialization is human-readable and works with any serializable type, but produces larger payloads than binary formats.
+
+#### ProtobufSerializer
+
+For better performance and smaller payloads, use `ProtobufSerializer` which uses [protobuf-net](https://github.com/protobuf-net/protobuf-net):
+
+```c#
+var cache = new RedisCache(redis, "myapp")
+{
+    Serializer = new ProtobufSerializer()
+};
+```
+
+**Important:** Types must be decorated with protobuf-net attributes:
+
+```c#
+[ProtoContract]
+public class Product
+{
+    [ProtoMember(1)]
+    public int Id { get; set; }
+
+    [ProtoMember(2)]
+    public string Name { get; set; }
+}
+```
+
+#### Compression Options
+
+`ProtobufSerializer` supports optional compression via the `CompressionFormat` property:
+
+| CompressionFormat | Description |
+|-|-|
+| `CompressionFormat.GZip` | GZip compression (default). Good balance of speed and compression ratio. |
+| `CompressionFormat.Deflate` | Deflate compression. Slightly faster than GZip, similar compression. |
+| `CompressionFormat.None` | No compression. Fastest, but larger payloads. |
+
+```c#
+// With GZip compression (default)
+var cache = new RedisCache(redis, "myapp")
+{
+    Serializer = new ProtobufSerializer { CompressionFormat = CompressionFormat.GZip }
+};
+
+// With Deflate compression
+var cache = new RedisCache(redis, "myapp")
 {
     Serializer = new ProtobufSerializer { CompressionFormat = CompressionFormat.Deflate }
+};
+
+// Without compression
+var cache = new RedisCache(redis, "myapp")
+{
+    Serializer = new ProtobufSerializer { CompressionFormat = CompressionFormat.None }
+};
+```
+
+#### Custom Serializers
+
+You can implement your own serializer by implementing `IRedisSerializer`:
+
+```c#
+public interface IRedisSerializer
+{
+    RedisValue Serialize<T>(T instance);
+    T Deserialize<T>(RedisValue value);
+}
+```
+
+Example using System.Text.Json:
+
+```c#
+public class SystemTextJsonSerializer : IRedisSerializer
+{
+    public RedisValue Serialize<T>(T instance)
+    {
+        return JsonSerializer.Serialize(instance);
+    }
+
+    public T Deserialize<T>(RedisValue value)
+    {
+        return JsonSerializer.Deserialize<T>(value);
+    }
+}
+
+// Usage
+var cache = new RedisCache(redis, "myapp")
+{
+    Serializer = new SystemTextJsonSerializer()
 };
 ```
 
@@ -122,6 +274,39 @@ The `CompositeCache` constructor requires the following parameters:
 |-|-|
 | `level1` | The highest-priority level of the composite cache. |
 | `level2` | The lowest-priority level of the composite cache. |
+
+## PassThroughCache
+
+`PassThroughCache` is a "null object" implementation of `ICache` that performs no caching. Every call to `GetSet` invokes the `calculateValue` callback, and `Invalidate` does nothing.
+
+```c#
+var cache = new PassThroughCache();
+```
+
+This is useful for:
+
+- **Unit testing**: Inject `PassThroughCache` to test your code without actual caching behavior
+- **Development**: Disable caching temporarily without changing your code structure
+- **Feature flags**: Conditionally disable caching based on configuration
+
+Example usage in tests:
+
+```c#
+[Fact]
+public async Task GetProduct_ReturnsProductFromRepository()
+{
+    // Arrange - use PassThroughCache to bypass caching
+    var cache = new PassThroughCache();
+    var repository = new MockProductRepository();
+    var service = new ProductService(cache, repository);
+
+    // Act
+    var product = await service.GetProductAsync(1);
+
+    // Assert - verify the repository was called (not cached)
+    Assert.Equal(1, repository.GetByIdCallCount);
+}
+```
 
 ## RedisInvalidationSender and RedisInvalidationReceiver
 
@@ -163,3 +348,157 @@ The `RedisInvalidationReceiver` constructor requires the following parameters:
 | `inner` | The cache to invalidate. |
 | `subscriber` | An ISubscriber that allows subscribing to Redis pubsub messages. |
 | `channel` | A `RedisChannel` to subscribe invalidation messages from. Use `RedisChannel.Literal("channel-name")` to create one. |
+
+## Thread Safety
+
+All `ICache` implementations in this library are **thread-safe** and designed for concurrent access from multiple threads.
+
+### Thundering Herd Prevention
+
+When multiple threads simultaneously request the same uncached key, only **one** thread will execute the `calculateValue` callback. Other threads will wait and receive the same cached result. This prevents the "thundering herd" problem where expensive calculations are performed multiple times.
+
+```c#
+// Safe: Only one database call will be made, even if 100 requests arrive simultaneously
+var value = await cache.GetSetAsync("expensive-key", async ct =>
+{
+    // This will only execute once, other concurrent callers wait
+    return await ExpensiveDatabaseCall(ct);
+}, TimeSpan.FromMinutes(5));
+```
+
+### Locking Behavior
+
+- **`MemoryCache`** and **`RedisCache`** use per-key `ReaderWriterLockSlim` locks
+- Read operations (cache hits) can proceed concurrently
+- Write operations (cache misses, invalidations) are serialized per key
+- Different keys do not block each other
+
+### Exception Handling
+
+If `calculateValue` throws an exception:
+
+1. The exception propagates to the caller
+2. The lock is properly released
+3. No partial value is cached
+4. Subsequent calls will retry the calculation
+
+```c#
+try
+{
+    var value = cache.GetSet("key", () =>
+    {
+        throw new Exception("Calculation failed");
+    }, TimeSpan.FromMinutes(5));
+}
+catch (Exception)
+{
+    // Lock is released, cache remains functional
+    // Next call will retry the calculation
+}
+```
+
+### Singleton Usage
+
+Cache instances should be registered as **singletons** in your DI container. Creating multiple instances of the same cache type will result in separate cache stores that don't share data.
+
+```c#
+// Correct: Single shared instance
+services.AddSingleton<ICache>(new MemoryCache("myapp"));
+
+// Incorrect: Each request gets a new empty cache
+services.AddTransient<ICache>(sp => new MemoryCache("myapp")); // Don't do this!
+```
+
+## Error Handling
+
+### Exceptions in calculateValue
+
+When `calculateValue` throws an exception, the behavior is:
+
+1. **Exception propagates**: The exception is re-thrown to the caller
+2. **Nothing is cached**: Failed calculations don't store partial results
+3. **Lock is released**: Other threads can proceed (and will retry)
+4. **Cache remains functional**: The cache is not corrupted
+
+```c#
+// First call - throws exception
+try
+{
+    var value = cache.GetSet("key", () =>
+    {
+        throw new DatabaseException("Connection failed");
+    }, TimeSpan.FromMinutes(5));
+}
+catch (DatabaseException)
+{
+    // Handle error - nothing was cached
+}
+
+// Second call - can succeed if the issue is resolved
+var value = cache.GetSet("key", () =>
+{
+    return database.GetValue(); // Works now
+}, TimeSpan.FromMinutes(5));
+// Value is now cached
+```
+
+### Transient Failures
+
+For operations that may have transient failures (network issues, timeouts), consider implementing retry logic in your `calculateValue`:
+
+```c#
+var value = await cache.GetSetAsync("key", async ct =>
+{
+    // Retry up to 3 times with exponential backoff
+    for (int attempt = 0; attempt < 3; attempt++)
+    {
+        try
+        {
+            return await httpClient.GetStringAsync(url, ct);
+        }
+        catch (HttpRequestException) when (attempt < 2)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), ct);
+        }
+    }
+    throw new Exception("All retries failed");
+}, TimeSpan.FromMinutes(5));
+```
+
+### Redis Connection Failures
+
+When using `RedisCache`, if Redis is unavailable:
+
+- `GetSet`/`GetSetAsync`: Throws `RedisConnectionException`
+- `Invalidate`/`InvalidateAsync`: Throws `RedisConnectionException`
+
+Consider wrapping with a fallback:
+
+```c#
+public async Task<T> GetWithFallbackAsync<T>(string key, Func<Task<T>> calculateValue, TimeSpan duration) where T : class
+{
+    try
+    {
+        return await _redisCache.GetSetAsync(key, _ => calculateValue(), duration);
+    }
+    catch (RedisConnectionException)
+    {
+        // Redis is down - fall back to direct calculation
+        _logger.LogWarning("Redis unavailable, bypassing cache for key {Key}", key);
+        return await calculateValue();
+    }
+}
+```
+
+### Serialization Errors
+
+If serialization or deserialization fails (e.g., type mismatch, corrupted data):
+
+- **Serialization failure**: Exception thrown, value not cached
+- **Deserialization failure**: Exception thrown, treated as cache miss
+
+When changing the structure of cached types, consider:
+
+1. Using a new cache key prefix/version
+2. Clearing the cache after deployment
+3. Using backward-compatible serialization (e.g., protobuf with optional fields)

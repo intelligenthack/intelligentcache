@@ -4,6 +4,19 @@
 
 This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.
 
+## Installation
+
+```bash
+dotnet add package IntelligentHack.IntelligentCache
+```
+
+### Requirements
+
+- .NET 8.0 or .NET 9.0
+- Redis server (only required for `RedisCache`)
+
+## Usage
+
 To use the pattern, you will interact with an object of type ICache, where you can use the following operations:
 
 ```c#
@@ -52,6 +65,8 @@ Take in account that when a `calculateValue` function returns a `null` value not
 # Details
 
 - [API Documentation](doc/api-documentation.md)
+
+- [ASP.NET Core Integration](doc/aspnet-core.md)
 
 - [Requirements and best practices](doc/best-practices.md)
 
