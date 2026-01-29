@@ -14,11 +14,6 @@ jobs:
     name: Publish Package
     runs-on: ubuntu-latest
 
-    # Required for Trusted Publishing OIDC token
-    permissions:
-      id-token: write
-      contents: read
-
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       DOTNET_NOLOGO: 1
@@ -57,11 +52,5 @@ jobs:
       - name: Pack
         run: dotnet pack ./IntelligentCache/IntelligentCache.csproj --configuration Release --no-build --output ./artifacts
 
-      - name: Login to NuGet (Trusted Publishing)
-        id: nuget-login
-        uses: nuget/login@v1
-        with:
-          user: IntelligentHack
-
       - name: Push to NuGet.org
-        run: dotnet nuget push ./artifacts/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+        run: dotnet nuget push ./artifacts/*.nupkg --skip-duplicate --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
