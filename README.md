@@ -2,6 +2,11 @@
 
 # Intelligent Cache
 
+[![Build and Test](https://github.com/intelligenthack/intelligentcache/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/intelligenthack/intelligentcache/actions/workflows/build-and-test.yml)
+[![NuGet](https://img.shields.io/nuget/v/IntelligentHack.IntelligentCache.svg)](https://www.nuget.org/packages/IntelligentHack.IntelligentCache/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/IntelligentHack.IntelligentCache.svg)](https://www.nuget.org/packages/IntelligentHack.IntelligentCache/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This package implements a distributed cache monad ("pattern") and currently supports single and multiple layers of caching, in memory and via Redis.
 
 ## Installation

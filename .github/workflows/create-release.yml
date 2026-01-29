@@ -1,67 +1,78 @@
-name: Create a new release
+name: Create Release
 
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: Commit to release
+      version:
+        description: 'Version number (e.g., 4.0.0)'
+        required: true
+      prerelease:
+        description: 'Is this a prerelease?'
         required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   release:
-    name: Draft Release
+    name: Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+
     steps:
-    - name: Checkout the repository
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event.inputs.ref }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install GitVersion.Tool
-      run: dotnet tool install --global GitVersion.Tool
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
-    - name: Get current version
-      id: get-version
-      run: echo "::set-output name=version::$(dotnet-gitversion /nofetch /showvariable NuGetVersionV2)"
+      - name: Validate version matches csproj
+        run: |
+          CSPROJ_VERSION=$(grep -oP '(?<=<Version>)[^<]+' ./IntelligentCache/IntelligentCache.csproj)
+          if [ "$CSPROJ_VERSION" != "${{ github.event.inputs.version }}" ]; then
+            echo "Error: Input version (${{ github.event.inputs.version }}) does not match csproj version ($CSPROJ_VERSION)"
+            exit 1
+          fi
+          echo "Version validated: $CSPROJ_VERSION"
 
-    - name: Scaffold release notes
-      id: scaffold-release-notes
-      run: |
-        $lastTag = git describe --tags --abbrev=0
-        $range = if ($lastTag -eq $null) { "HEAD" } else { "$lastTag..HEAD" }
-        
-        $releaseNotes = "```````nTODO: Review these release notes`n```````n"
-        $commit = $null
-        git rev-list $range --first-parent --reverse --pretty=tformat:%B |
-            % {
-                if ($_ -match "^commit (?<hash>[a-f0-9]+)$") {
-                    if ($commit -ne $null) {
-                        $releaseNotes += "`n- " + ([String]::Join("  `n  ", $commit))
-                    }
-                    $commit = @()
-                } else {
-                    if ($commit.Count -eq 0) {
-                        $commit += "**$_**"
-                    } else {
-                        $commit += $_
-                    }
-                }
-            }
-        
-        echo "::set-output name=releaseNotes::$($releaseNotes.Replace("%", '%25').Replace("`r", '%0D').Replace("`n", '%0A'))"
-      shell: pwsh
+      - name: Build and Test
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.get-version.outputs.version }}
-        release_name: Release ${{ steps.get-version.outputs.version }}
-        body: ${{ steps.scaffold-release-notes.outputs.releaseNotes }}
-        draft: true
-        prerelease: false
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract notes for this version from CHANGELOG.md
+            NOTES=$(awk '/^## \[${{ github.event.inputs.version }}\]/{flag=1; next} /^## \[/{flag=0} flag' CHANGELOG.md)
+            if [ -z "$NOTES" ]; then
+              NOTES="Release v${{ github.event.inputs.version }}"
+            fi
+          else
+            NOTES="Release v${{ github.event.inputs.version }}"
+          fi
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ github.event.inputs.version }}" \
+            --title "Release ${{ github.event.inputs.version }}" \
+            --notes "${{ steps.release-notes.outputs.notes }}" \
+            ${{ github.event.inputs.prerelease == 'true' && '--prerelease' || '' }} \
+            --draft
