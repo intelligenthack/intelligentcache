@@ -6,15 +6,15 @@
         <RootNamespace>IntelligentHack.IntelligentCache</RootNamespace>
         <AssemblyName>IntelligentHack.IntelligentCache</AssemblyName>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>4.0.1</Version>
+        <Version>4.0.2</Version>
         <PackageId>IntelligentHack.IntelligentCache</PackageId>
         <Authors>Marco Cecconi, Oded Coster, Antoine Aubry</Authors>
-        <PackageProjectUrl>https://github.com/intelligenthack/intelligent-cache</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/intelligenthack/intelligent-cache.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/intelligenthack/intelligentcache</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/intelligenthack/intelligentcache.git</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>High-performance, composable caching library for .NET. Features include multi-layer caching (memory + Redis), thundering herd protection, pub/sub cache invalidation, and flexible serialization (JSON, Protobuf). Perfect for ASP.NET Core applications.</Description>
         <PackageTags>cache;caching;redis;memory-cache;distributed-cache;aspnetcore;thundering-herd;pubsub</PackageTags>
-        <PackageReleaseNotes>v4.0.1: Improved NuGet package presentation with README and better description. v4.0.0: Updated to .NET 8.0/9.0, fixed security vulnerabilities, improved thread safety, modernized CI/CD. See CHANGELOG.md for details.</PackageReleaseNotes>
+        <PackageReleaseNotes>v4.0.2: Fixed repository URL. v4.0.1: Improved NuGet package presentation. v4.0.0: Updated to .NET 8.0/9.0, fixed security vulnerabilities. See CHANGELOG.md for details.</PackageReleaseNotes>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <Company>Intelligent Hack</Company>
     </PropertyGroup>
