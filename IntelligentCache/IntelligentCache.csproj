@@ -35,7 +35,7 @@
         </PackageReference>
         <PackageReference Include="protobuf-net" Version="3.0.52" />
         <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
-        <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
+        <PackageReference Include="System.Runtime.Caching" Version="10.0.5" />
         <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.2" />
     </ItemGroup>
 
