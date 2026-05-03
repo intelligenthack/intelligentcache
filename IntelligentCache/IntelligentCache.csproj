@@ -6,7 +6,7 @@
         <RootNamespace>IntelligentHack.IntelligentCache</RootNamespace>
         <AssemblyName>IntelligentHack.IntelligentCache</AssemblyName>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-        <Version>4.0.2</Version>
+        <Version>4.0.3</Version>
         <PackageId>IntelligentHack.IntelligentCache</PackageId>
         <Authors>Marco Cecconi, Oded Coster, Antoine Aubry</Authors>
         <PackageProjectUrl>https://github.com/intelligenthack/intelligentcache</PackageProjectUrl>
@@ -14,7 +14,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>High-performance, composable caching library for .NET. Features include multi-layer caching (memory + Redis), thundering herd protection, pub/sub cache invalidation, and flexible serialization (JSON, Protobuf). Perfect for ASP.NET Core applications.</Description>
         <PackageTags>cache;caching;redis;memory-cache;distributed-cache;aspnetcore;thundering-herd;pubsub</PackageTags>
-        <PackageReleaseNotes>v4.0.2: Fixed repository URL. v4.0.1: Improved NuGet package presentation. v4.0.0: Updated to .NET 8.0/9.0, fixed security vulnerabilities. See CHANGELOG.md for details.</PackageReleaseNotes>
+        <PackageReleaseNotes>v4.0.3: Bumped dependencies to address System.Security.Cryptography.Xml advisories (GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf). v4.0.2: Fixed repository URL. v4.0.1: Improved NuGet package presentation. v4.0.0: Updated to .NET 8.0/9.0, fixed security vulnerabilities. See CHANGELOG.md for details.</PackageReleaseNotes>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <Company>Intelligent Hack</Company>
     </PropertyGroup>
@@ -29,14 +29,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.0.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1">
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.7" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4">
             <VersionRangeType>Minimum</VersionRangeType>
         </PackageReference>
-        <PackageReference Include="protobuf-net" Version="3.0.52" />
-        <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
-        <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
-        <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.2" />
+        <PackageReference Include="protobuf-net" Version="3.2.56" />
+        <PackageReference Include="StackExchange.Redis" Version="2.12.14" />
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
+        <PackageReference Include="System.Runtime.Caching" Version="10.0.7" />
+        <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
     </ItemGroup>
 
     <ItemGroup>

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.3] - 2026-05-03
+
+### Security
+
+- Bumped `System.Security.Cryptography.Xml` to 10.0.7 to address [GHSA-37gx-xxp4-5rgx](https://github.com/advisories/GHSA-37gx-xxp4-5rgx) and [GHSA-w3x6-4m5h-cxqf](https://github.com/advisories/GHSA-w3x6-4m5h-cxqf) (both high severity).
+
+### Changed
+
+- Upgraded `protobuf-net` 3.0.52 → 3.2.56.
+- Upgraded `Microsoft.Extensions.Hosting.Abstractions` 3.0.0 → 10.0.7.
+- Upgraded `System.Runtime.Caching` 8.0.1 → 10.0.7.
+- Upgraded `StackExchange.Redis` 2.10.1 → 2.12.14.
+- Upgraded `Newtonsoft.Json` 13.0.1 → 13.0.4.
+- Added explicit `System.ServiceModel.Primitives` 8.1.2 reference (previously transitive via protobuf-net 3.0.x; required to keep `ProtobufSerializer.CompressionFormat` public API stable).
+- Test deps: `FakeItEasy` 8.3.0 → 9.0.1, `Microsoft.NET.Test.Sdk` 17.12.0 → 18.5.1, `xunit.runner.visualstudio` 3.0.1 → 3.1.5, `coverlet.collector` 6.0.4 → 10.0.0.
+
 ## [4.0.2] - 2026-01-29
 
 ### Fixed
